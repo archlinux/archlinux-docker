@@ -4,7 +4,7 @@ DOCKER_IMAGE := 'archlinux'
 rootfs:
 	$(eval TMPDIR := $(shell mktemp -d))
 	pacstrap -C /usr/share/devtools/pacman-extra.conf -c -d -G -M $(TMPDIR) $(shell cat packages)
-	cp -rp --backup --suffix=.pacnew rootfs/* $(TMPDIR)/
+	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(TMPDIR)/
 	arch-chroot $(TMPDIR) locale-gen
 	arch-chroot $(TMPDIR) pacman-key --init
 	arch-chroot $(TMPDIR) pacman-key --populate archlinux
@@ -14,8 +14,13 @@ rootfs:
 docker-image: rootfs
 	docker build -t $(DOCKER_USER)/$(DOCKER_IMAGE) .
 
-docker-push: docker-image
+docker-image-test: docker-image
+	# FIXME: /etc/mtab is hidden by docker so the stricter -Qkk fails
+	docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Sy && /usr/bin/pacman -Qqk"
+	docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm docker && docker -v"
+
+docker-push: docker-image-test
 	docker login -u $(DOCKER_USER)
 	docker push $(DOCKER_USER)/$(DOCKER_IMAGE)
 
-.PHONY: rootfs docker-image docker-push
+.PHONY: rootfs docker-image docker-image-test docker-push
