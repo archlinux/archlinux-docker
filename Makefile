@@ -22,7 +22,7 @@ docker-image-test: docker-image
 	! docker run --rm pierres/archlinux pacman-key --lsign-key pierre@archlinux.de
 
 ci-test:
-	docker run --rm --privileged -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/app -w /app pierres/archlinux \
+	docker run --rm --privileged --tmpfs=/tmp:exec -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/app -w /app pierres/archlinux \
 		sh -c 'pacman -Syu --noconfirm make devtools docker && make docker-image-test'
 
 docker-push: docker-image-test
