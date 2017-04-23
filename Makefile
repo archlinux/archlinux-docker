@@ -18,6 +18,8 @@ docker-image-test: docker-image
 	# FIXME: /etc/mtab is hidden by docker so the stricter -Qkk fails
 	docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Sy && /usr/bin/pacman -Qqk"
 	docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm docker && docker -v"
+	# Ensure that the image does not include a private key
+	! docker run --rm pierres/archlinux pacman-key --lsign-key pierre@archlinux.de
 
 docker-push: docker-image-test
 	docker login -u $(DOCKER_USER)
