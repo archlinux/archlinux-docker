@@ -21,6 +21,10 @@ docker-image-test: docker-image
 	# Ensure that the image does not include a private key
 	! docker run --rm pierres/archlinux pacman-key --lsign-key pierre@archlinux.de
 
+ci-test:
+	docker run --rm --privileged -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/app -w /app pierres/archlinux \
+		sh -c 'pacman -Sy --noconfirm make devtools docker && make docker-image-test'
+
 docker-push: docker-image-test
 	docker login -u $(DOCKER_USER)
 	docker push $(DOCKER_USER)/$(DOCKER_IMAGE)
