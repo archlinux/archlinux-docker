@@ -22,7 +22,7 @@ docker-image-test: docker-image
 	! docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) pacman-key --lsign-key pierre@archlinux.de
 
 ci-test:
-	docker run --rm --privileged --tmpfs=/tmp:exec --tmpfs=/run/shm -v /var/run/docker.sock:/var/run/docker.sock \
+	docker run --rm --privileged --tmpfs=/tmp:exec --tmpfs=/run/shm -v /run/docker.sock:/run/docker.sock \
 		-v $(PWD):/app -w /app $(DOCKER_USER)/$(DOCKER_IMAGE) \
 		sh -c 'pacman -Syu --noconfirm make devtools docker && make docker-image-test'
 
