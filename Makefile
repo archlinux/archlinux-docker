@@ -1,5 +1,5 @@
-DOCKER_USER := 'pierres'
-DOCKER_IMAGE := 'archlinux'
+DOCKER_USER:=pierres
+DOCKER_IMAGE:=archlinux
 
 rootfs:
 	$(eval TMPDIR := $(shell mktemp -d))
@@ -19,14 +19,15 @@ docker-image-test: docker-image
 	docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Sy && /usr/bin/pacman -Qqk"
 	docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm docker && docker -v"
 	# Ensure that the image does not include a private key
-	! docker run --rm pierres/archlinux pacman-key --lsign-key pierre@archlinux.de
+	! docker run --rm $(DOCKER_USER)/$(DOCKER_IMAGE) pacman-key --lsign-key pierre@archlinux.de
 
 ci-test:
-	docker run --rm --privileged --tmpfs=/tmp:exec --tmpfs=/run/shm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/app -w /app pierres/archlinux \
+	docker run --rm --privileged --tmpfs=/tmp:exec --tmpfs=/run/shm -v /var/run/docker.sock:/var/run/docker.sock \
+		-v $(PWD):/app -w /app $(DOCKER_USER)/$(DOCKER_IMAGE) \
 		sh -c 'pacman -Syu --noconfirm make devtools docker && make docker-image-test'
 
 docker-push: docker-image-test
 	docker login -u $(DOCKER_USER)
 	docker push $(DOCKER_USER)/$(DOCKER_IMAGE)
 
-.PHONY: rootfs docker-image docker-image-test docker-push
+.PHONY: rootfs docker-image docker-image-test ci-test docker-push
