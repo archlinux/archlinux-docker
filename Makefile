@@ -23,7 +23,7 @@ docker-image-test: docker-image
 
 ci-test:
 	docker run --rm --privileged -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD):/app -w /app pierres/archlinux \
-		sh -c 'pacman -Sy --noconfirm make devtools docker && make docker-image-test'
+		sh -c 'pacman -Syu --noconfirm make devtools docker && make docker-image-test'
 
 docker-push: docker-image-test
 	docker login -u $(DOCKER_USER)
