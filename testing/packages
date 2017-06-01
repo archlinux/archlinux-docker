@@ -1,0 +1,14 @@
+diffutils
+gettext
+grep
+inetutils
+iproute2
+iputils
+pacman
+procps-ng
+psmisc
+sed
+tar
+util-linux
+which
+gzip
