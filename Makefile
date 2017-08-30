@@ -4,7 +4,7 @@ DOCKER_IMAGE:=base
 
 rootfs:
 	$(eval TMPDIR := $(shell mktemp -d))
-	pacstrap -C /usr/share/devtools/pacman-extra.conf -c -d -G -M $(TMPDIR) $(shell cat packages)
+	pacstrap -C $(DOCKER_IMAGE)/pacman.conf -c -d -G -M $(TMPDIR) $(shell cat $(DOCKER_IMAGE)/packages)
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(TMPDIR)/
 	arch-chroot $(TMPDIR) locale-gen
 	arch-chroot $(TMPDIR) pacman-key --init
@@ -31,4 +31,4 @@ docker-push: docker-image-test
 	docker login -u $(DOCKER_USER)
 	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE)
 
-.PHONY: rootfs docker-image docker-image-test ci-test docker-push
+.PHONY: rootfs docker-image docker-image-test ci-test docker-push base
