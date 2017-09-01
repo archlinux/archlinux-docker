@@ -9,6 +9,7 @@ rootfs:
 	arch-chroot $(TMPDIR) locale-gen
 	arch-chroot $(TMPDIR) pacman-key --init
 	arch-chroot $(TMPDIR) pacman-key --populate archlinux
+	arch-chroot $(TMPDIR) find /usr/share/man/ -mindepth 1 -delete
 	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(TMPDIR) -c . -f archlinux.tar
 	rm -rf $(TMPDIR)
 
