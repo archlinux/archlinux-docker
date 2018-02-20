@@ -8,6 +8,7 @@ etc/pacman.d/gnupg/pubring.gpg~
 etc/pacman.d/gnupg/S.*
 root/*
 tmp/*
+usr/share/man/*
 var/cache/pacman/pkg/*
 var/lib/pacman/sync/*
 var/tmp/*
