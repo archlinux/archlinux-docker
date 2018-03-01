@@ -29,7 +29,7 @@ ci-test:
 		-v $(PWD):/app -w /app $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) \
 		sh -c 'pacman -Syu --noconfirm make devtools docker && make docker-image-test'
 
-docker-push: docker-image-test
+docker-push:
 	docker login -u $(DOCKER_USER)
 	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE)
 
