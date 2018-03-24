@@ -1,16 +1,16 @@
 DOCKER_USER:=pierres
 DOCKER_ORGANIZATION=archlinux
 DOCKER_IMAGE:=base
+BUILDDIR=build
 
 rootfs:
-	$(eval TMPDIR := $(shell mktemp -d))
-	env -i pacstrap -C /usr/share/devtools/pacman-extra.conf -c -d -G -M $(TMPDIR) $(shell cat packages)
-	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(TMPDIR)/
-	arch-chroot $(TMPDIR) locale-gen
-	arch-chroot $(TMPDIR) pacman-key --init
-	arch-chroot $(TMPDIR) pacman-key --populate archlinux
-	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(TMPDIR) -c . -f archlinux.tar
-	rm -rf $(TMPDIR)
+	mkdir -vp $(BUILDDIR)/var/lib/pacman/
+	fakeroot -- pacman -Syu -r $(BUILDDIR) \
+		--noconfirm --dbpath $(PWD)/$(BUILDDIR)/var/lib/pacman \
+		--hookdir rootfs/usr/share/libalpm/hooks/ $(shell cat packages)
+	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
+	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
+	rm -rf $(BUILDDIR)
 
 docker-image: rootfs
 	docker build -t $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) .
