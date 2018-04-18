@@ -3,17 +3,21 @@ DOCKER_ORGANIZATION=archlinux
 DOCKER_IMAGE:=base
 BUILDDIR=build
 
-rootfs:
+hooks:
+	mkdir -p alpm-hooks/usr/share/libalpm/hooks
+	find /usr/share/libalpm/hooks -exec ln -s /dev/null $(PWD)/alpm-hooks{} \;
+
+rootfs: hooks
 	mkdir -vp $(BUILDDIR)/var/lib/pacman/
-	fakechroot -- fakeroot -- pacman -Syu -r $(BUILDDIR) \
+	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
 		--noconfirm --dbpath $(PWD)/$(BUILDDIR)/var/lib/pacman \
 		--config rootfs/etc/pacman.conf \
 		--noscriptlet \
-		--hookdir $(PWD)/rootfs/usr/share/libalpm/hooks/ $(shell cat packages)
+		--hookdir $(PWD)/alpm-hooks/usr/share/libalpm/hooks/ $(shell cat packages)
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
 	rm -r build/var/cache/pacman/pkg
 	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
-	rm -rf $(BUILDDIR)
+	rm -rf $(BUILDDIR) alpm-hooks
 
 docker-image: rootfs
 	docker build -t $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) .
