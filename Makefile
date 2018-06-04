@@ -12,7 +12,7 @@ rootfs: hooks
 	mkdir -vp $(BUILDDIR)/var/lib/pacman/
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
 		--noconfirm --dbpath $(PWD)/$(BUILDDIR)/var/lib/pacman \
-		--config rootfs/etc/pacman.conf \
+		--config pacman.conf \
 		--noscriptlet \
 		--hookdir $(PWD)/alpm-hooks/usr/share/libalpm/hooks/ $(shell cat packages)
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
