@@ -16,7 +16,6 @@ rootfs: hooks
 		--noscriptlet \
 		--hookdir $(PWD)/alpm-hooks/usr/share/libalpm/hooks/ $(shell cat packages)
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
-	rm -r build/var/cache/pacman/pkg
 	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
 	rm -rf $(BUILDDIR) alpm-hooks
 
