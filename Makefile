@@ -2,6 +2,7 @@ DOCKER_USER:=pierres
 DOCKER_ORGANIZATION=archlinux
 DOCKER_IMAGE:=base
 BUILDDIR=build
+PWD=$(shell pwd)
 
 hooks:
 	mkdir -p alpm-hooks/usr/share/libalpm/hooks
