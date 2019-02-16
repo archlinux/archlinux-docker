@@ -4,6 +4,7 @@ This repository contains all scripts and files needed to create a Docker base im
 Install the following Arch Linux packages:
 * make
 * devtools
+* docker
 ## Usage
 Run `make docker-image` as root to build the base image.
 ## Purpose
