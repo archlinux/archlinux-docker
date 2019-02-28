@@ -2,3 +2,4 @@
 *.orig
 /.idea
 /archlinux.tar
+rootfs/etc/pacman.conf
