@@ -10,6 +10,8 @@ hooks:
 
 rootfs: hooks
 	mkdir -vp $(BUILDDIR)/var/lib/pacman/
+	cp /usr/share/devtools/pacman-extra.conf rootfs/etc/pacman.conf
+	cat pacman-conf.d-noextract.conf >> rootfs/etc/pacman.conf
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
 		--noconfirm --dbpath $(PWD)/$(BUILDDIR)/var/lib/pacman \
 		--config pacman.conf \
