@@ -9,7 +9,7 @@ rootfs:
 	arch-chroot $(TMPDIR) locale-gen
 	arch-chroot $(TMPDIR) pacman-key --init
 	arch-chroot $(TMPDIR) pacman-key --populate archlinux
-	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(TMPDIR) -c . -f archlinux.tar
+	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(TMPDIR) -c . -xf archlinux.tar.xz
 	rm -rf $(TMPDIR)
 
 docker-image: rootfs
