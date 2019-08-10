@@ -6,7 +6,7 @@ PWD=$(shell pwd)
 
 hooks:
 	mkdir -p alpm-hooks/usr/share/libalpm/hooks
-	find /usr/share/libalpm/hooks -exec ln -s /dev/null $(PWD)/alpm-hooks{} \;
+	find /usr/share/libalpm/hooks -exec ln -sf /dev/null $(PWD)/alpm-hooks{} \;
 
 rootfs: hooks
 	mkdir -vp $(BUILDDIR)/var/lib/pacman/
