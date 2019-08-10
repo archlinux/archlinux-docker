@@ -20,7 +20,7 @@ rootfs: hooks
 	rm -rf $(BUILDDIR) alpm-hooks
 
 compress-rootfs: rootfs
-	xz archlinux.tar
+	xz -9e -T0 -f archlinux.tar
 
 docker-image: compress-rootfs
 	docker build -t $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) .
