@@ -8,4 +8,4 @@ Target = *
 Description = Cleaning up package cache...
 Depends = coreutils
 When = PostTransaction
-Exec = /usr/bin/rm -rf /var/cache/pacman/pkg
+Exec = /usr/bin/find /var/cache/pacman/pkg/ -type f -delete
