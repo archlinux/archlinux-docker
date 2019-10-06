@@ -23,7 +23,7 @@ rootfs: hooks
 	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
 	rm -rf $(BUILDDIR) alpm-hooks
 
-compress-rootfs: rootfs
+compress-rootfs: archlinux.tar
 	xz archlinux.tar
 
 docker-image: compress-rootfs
