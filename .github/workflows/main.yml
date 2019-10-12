@@ -1,0 +1,12 @@
+name: Github-Actions
+
+on: [push, pull_request]
+
+jobs:
+  ci-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: make ci-test
+      run: make ci-test
