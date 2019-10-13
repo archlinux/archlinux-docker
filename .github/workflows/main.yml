@@ -8,5 +8,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: make ci-test
-      run: make ci-test
+    - name: make docker-image-test
+      run: make docker-image-test

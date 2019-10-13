@@ -6,4 +6,4 @@ services:
   - docker
 
 script:
-  - make ci-test
+  - make docker-image-test
