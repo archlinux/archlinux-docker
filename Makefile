@@ -20,7 +20,9 @@ rootfs: hooks
 	# remove passwordless login for root (see CVE-2019-5021 for reference)
 	sed -i -e 's/^root::/root:!:/' "$(BUILDDIR)/etc/shadow"
 
-	tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
+	# fakeroot to map the gid/uid of the builder process to root
+	# fixes #22
+	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
 	rm -rf $(BUILDDIR) alpm-hooks
 
 compress-rootfs: archlinux.tar
