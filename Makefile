@@ -27,8 +27,10 @@ rootfs: hooks
 	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
 	rm -rf $(BUILDDIR) alpm-hooks
 
+archlinux.tar: rootfs
+
 compress-rootfs: archlinux.tar
-	xz archlinux.tar
+	xz -f archlinux.tar
 
 docker-image: compress-rootfs
 	docker build -t $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) .
@@ -36,8 +38,7 @@ docker-image: compress-rootfs
 docker-image-test: docker-image
 	# FIXME: /etc/mtab is hidden by docker so the stricter -Qkk fails
 	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Sy && /usr/bin/pacman -Qqk"
-	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm docker && docker -v"
-	# Ensure that the image does not include a private key
+	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm docker && docker -v" # Ensure that the image does not include a private key
 	! docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) pacman-key --lsign-key pierre@archlinux.de
 	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/id -u http"
 	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm grep && locale | grep -q UTF-8"
