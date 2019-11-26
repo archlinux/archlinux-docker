@@ -2,3 +2,4 @@ sed
 gzip
 pacman
 systemd
+gawk
