@@ -2,9 +2,7 @@
 This repository contains all scripts and files needed to create a Docker base image for the Arch Linux distribution.
 ## Dependencies
 Install the following Arch Linux packages:
-* make
-* devtools
-* docker
+* base
 ## Usage
 Run `make docker-image` as root to build the base image.
 ## Purpose

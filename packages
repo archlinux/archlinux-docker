@@ -1,4 +1,2 @@
-sed
-gzip
-pacman
-systemd
+base
+
