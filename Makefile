@@ -4,6 +4,8 @@ DOCKER_IMAGE:=base
 BUILDDIR=build
 PWD=$(shell pwd)
 
+XZ_THREADS ?= 0
+
 hooks:
 	mkdir -p alpm-hooks/usr/share/libalpm/hooks
 	find /usr/share/libalpm/hooks -exec ln -sf /dev/null $(PWD)/alpm-hooks{} \;
@@ -30,8 +32,7 @@ rootfs: hooks
 archlinux.tar: rootfs
 
 compress-rootfs: archlinux.tar
-	xz -f archlinux.tar
-	xz -9e -T0 -f archlinux.tar
+	xz -9 -T"$(XZ_THREADS)" -f archlinux.tar
 
 docker-image: compress-rootfs
 	docker build -t $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) .
