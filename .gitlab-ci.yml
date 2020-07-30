@@ -8,10 +8,10 @@ roofs:
   image: archlinux:latest
   script:
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
-    - make archlinux.tar
+    - make compress-rootfs
   artifacts:
     paths:
-      - archlinux.tar
+      - archlinux.tar.xz
     expire_in: 10m
 
 docker:
@@ -20,9 +20,11 @@ docker:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
-    - test -f archlinux.tar
+    - test -f archlinux.tar.xz
     # kaniko can't process .tar.xz archives
     # https://github.com/GoogleContainerTools/kaniko/issues/1107
+    - unxz archlinux.tar.xz
+    - test -f archlinux.tar
     - sed -i 's/archlinux\.tar\.xz/archlinux\.tar/g' Dockerfile
     - echo "Building ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
