@@ -6,6 +6,7 @@ Install the following Arch Linux packages:
 * devtools
 * docker
 * fakechroot
+* fakeroot
 ## Usage
 Run `make docker-image` as root to build the base image.
 ## Purpose
