@@ -45,13 +45,8 @@ docker-image-test: docker-image
 	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/id -u http"
 	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm grep && locale | grep -q UTF-8"
 
-ci-test:
-	docker run --rm --privileged --tmpfs=/tmp:exec --tmpfs=/run/shm -v /run/docker.sock:/run/docker.sock \
-		-v $(PWD):/app -w /app $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) \
-		sh -c 'pacman -Syu --noconfirm fakechroot fakeroot make devtools docker && make docker-image-test'
-
 docker-push:
 	docker login -u $(DOCKER_USER)
 	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE)
 
-.PHONY: rootfs docker-image docker-image-test ci-test docker-push
+.PHONY: rootfs docker-image docker-image-test docker-push
