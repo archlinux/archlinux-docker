@@ -2,3 +2,9 @@ sed
 gzip
 pacman
 systemd
+gawk
+file
+grep
+tar
+procps-ng
+licenses
