@@ -1,0 +1,50 @@
+stages:
+  - rootfs
+  - docker
+  - test
+
+roofs:
+  stage: rootfs
+  image: archlinux:latest
+  script:
+    - pacman -Syu --noconfirm make devtools fakechroot fakeroot
+    - make compress-rootfs
+  artifacts:
+    paths:
+      - archlinux.tar.xz
+    expire_in: 10m
+
+docker:
+  stage: docker
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - test -f archlinux.tar.xz
+    # kaniko can't process .tar.xz archives
+    # https://github.com/GoogleContainerTools/kaniko/issues/1107
+    - unxz archlinux.tar.xz
+    - test -f archlinux.tar
+    - sed -i 's/archlinux\.tar\.xz/archlinux\.tar/g' Dockerfile
+    - echo "Building ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/Dockerfile
+      --destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}
+
+test:
+  stage: test
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}
+  needs:
+    - job: docker
+      artifacts: false
+  script:
+    - pacman -Sy
+    - pacman -Qqk
+    - pacman -Syu --noconfirm docker grep
+    - docker -v
+    - id -u http
+    - locale | grep -q UTF-8
+
