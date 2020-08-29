@@ -1,6 +1,6 @@
 *~
 *.orig
 /.idea
-/archlinux.tar
-/archlinux.tar.xz
+/base.tar*
+/base-devel.tar*
 rootfs/etc/pacman.conf
