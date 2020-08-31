@@ -1,5 +1,13 @@
+FROM archlinux:latest AS verify
+COPY TEMPLATE_ROOTFS_FILE /
+SHELL ["/bin/bash", "-c"]
+RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effective}" TEMPLATE_ROOTFS_URL)" && \
+    sha256sum -c <<< "TEMPLATE_ROOTFS_HASH" && \
+    mkdir /rootfs && \
+    tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
+
 FROM scratch AS base
-ADD TEMPLATE_LOCATION_HERE /
+COPY --from=verify /rootfs/ /
 
 # manually run all alpm hooks that can't be run inside the fakechroot
 RUN ldconfig && update-ca-trust && locale-gen

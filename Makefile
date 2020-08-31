@@ -49,20 +49,32 @@ rootfs-base-devel: hooks
 
 base.tar.xz: rootfs-base
 	xz -9 -T0 -f base.tar
+	sha256sum base.tar.xz > base.tar.xz.SHA256
 
 base-devel.tar.xz: rootfs-base-devel
 	xz -9 -T0 -f base-devel.tar
+	sha256sum base-devel.tar.xz > base-devel.tar.xz.SHA256
+
+.PHONY: dockerfile-image-base
+dockerfile-image-base: base.tar.xz
+	sed -e "s/TEMPLATE_ROOTFS_FILE/base.tar.xz/" \
+	    -e "s/TEMPLATE_ROOTFS_URL/file:\/\/\/base.tar.xz/" \
+	    -e "s/TEMPLATE_ROOTFS_HASH/$$(cat base.tar.xz.SHA256)/" \
+	    Dockerfile.template > Dockerfile.base
+
+.PHONY: dockerfile-image-base-devel
+dockerfile-image-base-devel: base-devel.tar.xz
+	sed -e "s/TEMPLATE_ROOTFS_FILE/base-devel.tar.xz/" \
+	    -e "s/TEMPLATE_ROOTFS_URL/file:\/\/\/base-devel.tar.xz/" \
+	    -e "s/TEMPLATE_ROOTFS_HASH/$$(cat base-devel.tar.xz.SHA256)/" \
+	    Dockerfile.template > Dockerfile.base-devel
 
 .PHONY: docker-image-base
-docker-image-base: base.tar.xz
-	unxz base.tar.xz
-	sed "s/TEMPLATE_LOCATION_HERE/base.tar/" Dockerfile.template > Dockerfile.base
+docker-image-base: dockerfile-image-base
 	docker build -f Dockerfile.base -t archlinux/archlinux:base .
 
 .PHONY: docker-image-base-devel
-docker-image-base-devel: base-devel.tar.xz
-	unxz base-devel.tar.xz
-	sed "s/TEMPLATE_LOCATION_HERE/base-devel.tar/" Dockerfile.template > Dockerfile.base-devel
+docker-image-base-devel: dockerfile-image-base-devel
 	docker build -f Dockerfile.base-devel -t archlinux/archlinux:base-devel .
 
 .PHONY: docker-push-base
