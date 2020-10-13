@@ -1,7 +1,7 @@
 stages:
   - lint
   - rootfs
-  - docker
+  - image
   - test
   - release
   - publish
@@ -12,51 +12,78 @@ lint:
   # DL3007: We use the latest tag for multistage build
   script: hadolint --ignore DL3007 --ignore DL3020 Dockerfile.template
 
-rootfs:base:
+.rootfs:
   stage: rootfs
   image: archlinux:latest
-  needs:
-    - job: "lint"
   before_script:
     - echo "BUILD_DATE=$(date +%Y%m%d)" > build.env
-  script:
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
+  script:
     - make dockerfile-image-base
   artifacts:
     paths:
       - base.tar.xz
+      - base-devel.tar.xz
       - Dockerfile.base
-    expire_in: 10m
+      - Dockerfile.base-devel
+    expire_in: 2h
     reports:
       dotenv: build.env
+
+rootfs:base:
+  extends: .rootfs
+  except:
+    - master
+    - schedules
+    - tags
+  script:
+    - make dockerfile-image-base
 
 rootfs:base-devel:
-  stage: rootfs
-  image: archlinux:latest
-  needs:
-    - job: "lint"
-  before_script:
-    - echo "BUILD_DATE=$(date +%Y%m%d)" > build.env
+  extends: .rootfs
+  except:
+    - master
+    - schedules
+    - tags
   script:
-    - pacman -Syu --noconfirm make devtools fakechroot fakeroot
     - make dockerfile-image-base-devel
-  artifacts:
-    paths:
-      - base-devel.tar.xz
-      - Dockerfile.base-devel
-    expire_in: 10m
-    reports:
-      dotenv: build.env
 
-docker:base:
-  stage: docker
+rootfs:base:secure:
+  extends: .rootfs
+  tags:
+    - secure
+  only:
+    - master
+    - schedules
+    - tags
+  script:
+    - make dockerfile-image-base
+
+rootfs:base-devel:secure:
+  extends: .rootfs
+  tags:
+    - secure
+  only:
+    - master
+    - schedules
+    - tags
+  script:
+    - make dockerfile-image-base-devel
+
+.image:
+  stage: image
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
-  needs:
-    - job: "rootfs:base"
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+
+image:base:
+  extends: .image
+  except:
+    - master
+    - schedules
+    - tags
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -64,15 +91,12 @@ docker:base:
       --dockerfile $CI_PROJECT_DIR/Dockerfile.base
       --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
 
-docker:base-devel:
-  stage: docker
-  image:
-    name: gcr.io/kaniko-project/executor:debug
-    entrypoint: [""]
-  needs:
-    - job: "rootfs:base-devel"
-  before_script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+image:base-devel:
+  extends: .image
+  except:
+    - master
+    - schedules
+    - tags
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -80,55 +104,81 @@ docker:base-devel:
       --dockerfile $CI_PROJECT_DIR/Dockerfile.base-devel
       --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
 
-test:base:
-  stage: test
-  image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
-  needs:
-    - job: "docker:base"
-      artifacts: false
-  script:
-    - pacman -Sy
-    - pacman -Qqk
-    - pacman -Syu --noconfirm docker grep
-    - docker -v
-    - id -u http
-    - locale | grep -q UTF-8
-
-test:base-devel:
-  stage: test
-  image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-  needs:
-    - job: "docker:base-devel"
-      artifacts: false
-  script:
-    - pacman -Sy
-    - pacman -Qqk
-    - pacman -Syu --noconfirm docker grep
-    - docker -v
-    - id -u http
-    - locale | grep -q UTF-8
-    - gcc -v
-    - g++ -v
-    - make -v
-
-release:
-  stage: release
-  image: archlinux:latest
-  only:
-    refs:
-      - master
-      - add-base-devel-tags
-    variables:
-      - $SCHEDULED_PUBLISH == "TRUE"
-  needs:
-    - job: "test:base"
-    - job: "test:base-devel"
-  before_script:
-    - pacman -Syu python-gitlab
-  script:
-    - python ci/release.py
+image:base:secure:
+  extends: .image
   tags:
     - secure
+  only:
+    - master
+    - schedules
+    - tags
+  script:
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/Dockerfile.base
+      --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+
+image:base-devel:secure:
+  extends: .image
+  tags:
+    - secure
+  only:
+    - master
+    - schedules
+    - tags
+  script:
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/Dockerfile.base-devel
+      --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
+
+# test:base:
+#   stage: test
+#   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+#   dependencies: []
+#   script:
+#     - pacman -Sy
+#     - pacman -Qqk
+#     - pacman -Syu --noconfirm docker grep
+#     - docker -v
+#     - id -u http
+#     - locale | grep -q UTF-8
+#
+# test:base-devel:
+#   stage: test
+#   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
+#   dependencies: []
+#   script:
+#     - pacman -Sy
+#     - pacman -Qqk
+#     - pacman -Syu --noconfirm docker grep
+#     - docker -v
+#     - id -u http
+#     - locale | grep -q UTF-8
+#     - gcc -v
+#     - g++ -v
+#     - make -v
+#
+# release:
+#   stage: release
+#   image: archlinux:latest
+#   only:
+#     refs:
+#       - master
+#       - add-base-devel-tags
+#     variables:
+#       - $SCHEDULED_PUBLISH == "TRUE"
+#   needs:
+#     - job: "test:base"
+#     - job: "test:base-devel"
+#   before_script:
+#     - pacman -Syu python-gitlab
+#   script:
+#     - python ci/release.py
+#   tags:
+#     - secure
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux:base
 # publish:org:base:
