@@ -9,7 +9,8 @@ stages:
 lint:
   stage: lint
   image: hadolint/hadolint:latest
-  script: hadolint --ignore DL3020 Dockerfile.template
+  # DL3007: We use the latest tag for multistage build
+  script: hadolint --ignore DL3007 --ignore DL3020 Dockerfile.template
 
 rootfs:base:
   stage: rootfs
@@ -20,10 +21,11 @@ rootfs:base:
     - echo "BUILD_DATE=$(date +%Y%m%d)" > build.env
   script:
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
-    - make base.tar.xz
+    - make dockerfile-image-base
   artifacts:
     paths:
       - base.tar.xz
+      - Dockerfile.base
     expire_in: 10m
     reports:
       dotenv: build.env
@@ -37,10 +39,11 @@ rootfs:base-devel:
     - echo "BUILD_DATE=$(date +%Y%m%d)" > build.env
   script:
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
-    - make base-devel.tar.xz
+    - make dockerfile-image-base-devel
   artifacts:
     paths:
       - base-devel.tar.xz
+      - Dockerfile.base-devel
     expire_in: 10m
     reports:
       dotenv: build.env
@@ -54,8 +57,6 @@ docker:base:
     - job: "rootfs:base"
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - sed "s/TEMPLATE_LOCATION_HERE/base.tar/" Dockerfile.template > Dockerfile.base
-    - unxz base.tar.xz
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -72,8 +73,6 @@ docker:base-devel:
     - job: "rootfs:base-devel"
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - sed "s/TEMPLATE_LOCATION_HERE/base-devel.tar/" Dockerfile.template > Dockerfile.base-devel
-    - unxz base-devel.tar.xz
   script:
     - /kaniko/executor
       --whitelist-var-run="false"

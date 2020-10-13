@@ -11,6 +11,7 @@ Required env vars:
 """
 
 import os
+import re
 from pathlib import Path
 import gitlab
 
@@ -24,22 +25,36 @@ if __name__ == "__main__":
     project = gl.projects.get(project_id)
 
     print("Uploading base.tar.xz")
+    base_filename = f"base-{build_date}.tar.xz"
     base_uploaded_url = project.upload(
-        f"base-{build_date}.tar.xz", filepath="base.tar.xz"
+        base_filename, filepath="base.tar.xz"
     )["url"]
     base_template = Path("Dockerfile.template").read_text()
     base_full_url = f"{project_url}{base_uploaded_url}"
-    base_replaced = base_template.replace("TEMPLATE_LOCATION_HERE", base_full_url)
+    base_replaced = base_template.replace("TEMPLATE_ROOTFS_URL", base_full_url)
+    base_hash = f"{Path('base.tar.xz.SHA256').read_text()[0:64]}  {base_filename}"
+    base_replaced = base_replaced.replace(
+        "TEMPLATE_ROOTFS_HASH", base_hash
+    )
+    # Remove the line containing TEMPLATE_ROOTFS_FILE
+    base_replaced = re.sub(".*TEMPLATE_ROOTFS_FILE.*\n", "", base_replaced)
 
     print("Uploading base-devel.tar.xz")
+    base_devel_filename = f"base-devel-{build_date}.tar.xz"
     base_devel_uploaded_url = project.upload(
-        f"base-devel-{build_date}.tar.xz", filepath="base-devel.tar.xz"
+        base_devel_filename, filepath="base-devel.tar.xz"
     )["url"]
     base_devel_template = Path("Dockerfile.template").read_text()
     base_devel_full_url = f"{project_url}{base_devel_uploaded_url}"
     base_devel_replaced = base_devel_template.replace(
-        "TEMPLATE_LOCATION_HERE", base_devel_full_url
+        "TEMPLATE_ROOTFS_URL", base_devel_full_url
     )
+    base_devel_hash = f"{Path('base-devel.tar.xz.SHA256').read_text()[0:64]}  {base_devel_filename}"
+    base_devel_replaced = base_devel_replaced.replace(
+        "TEMPLATE_ROOTFS_HASH", base_devel_hash
+    )
+    # Remove the line containing TEMPLATE_ROOTFS_FILE
+    base_devel_replaced = re.sub(".*TEMPLATE_ROOTFS_FILE.*\n", "", base_devel_replaced)
 
     print("Templating Dockerfiles")
     data = {
