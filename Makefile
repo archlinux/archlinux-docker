@@ -48,11 +48,11 @@ rootfs-base-devel: hooks
 	rm -rf $(BUILDDIR) alpm-hooks
 
 base.tar.xz: rootfs-base
-	xz -T0 -f base.tar
+	xz -9 -T0 -f base.tar
 	sha256sum base.tar.xz > base.tar.xz.SHA256
 
 base-devel.tar.xz: rootfs-base-devel
-	xz -T0 -f base-devel.tar
+	xz -9 -T0 -f base-devel.tar
 	sha256sum base-devel.tar.xz > base-devel.tar.xz.SHA256
 
 .PHONY: dockerfile-image-base
