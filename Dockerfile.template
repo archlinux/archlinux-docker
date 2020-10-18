@@ -8,6 +8,8 @@ RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effecti
 
 FROM scratch AS base
 COPY --from=verify /rootfs/ /
+
+# Fix kaniko DNS problems as kaniko uses the current layer's resolv.conf.
 COPY --from=verify /etc/resolv.conf /etc/resolv.conf
 
 # manually run all alpm hooks that can't be run inside the fakechroot
