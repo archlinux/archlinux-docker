@@ -4,8 +4,7 @@ SHELL ["/bin/bash", "-c"]
 RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effective}" TEMPLATE_ROOTFS_URL)" && \
     sha256sum -c <<< "TEMPLATE_ROOTFS_HASH" && \
     mkdir /rootfs && \
-    # Fix kaniko DNS problems as kaniko uses the current layer's resolv.conf. \
-    tar -C /rootfs --extract --auto-compress --exclude=./etc/resolv.conf --file "${ROOTFS}"
+    tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
 
 FROM scratch AS base
 COPY --from=verify /rootfs/ /
