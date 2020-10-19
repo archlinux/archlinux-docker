@@ -163,6 +163,8 @@ test:base-devel:
 release:
   stage: release
   image: archlinux:latest
+  tags:
+    - secure
   only:
     refs:
       - schedules
@@ -172,8 +174,6 @@ release:
     - pacman -Syu python-gitlab
   script:
     - python ci/release.py
-  tags:
-    - secure
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux:base
 # publish:org:base:
