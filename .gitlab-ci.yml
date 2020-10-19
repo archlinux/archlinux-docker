@@ -16,7 +16,7 @@ lint:
   stage: rootfs
   image: archlinux:latest
   before_script:
-    - echo "BUILD_DATE=$(date +%Y%m%d)" > build.env
+    - echo "BUILD_DATE=$(date +%Y%m%d).$CI_JOB_ID" > build.env
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
   artifacts:
     paths:
