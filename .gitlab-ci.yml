@@ -165,8 +165,7 @@ release:
   image: archlinux:latest
   only:
     refs:
-      - master
-      - add-base-devel-tags
+      - schedules
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
   before_script:
