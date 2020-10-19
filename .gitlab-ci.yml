@@ -18,7 +18,7 @@ lint:
 .rootfs:
   stage: rootfs
   before_script:
-    - echo "BUILD_DATE=$(date +%Y%m%d).$CI_JOB_ID" > build.env
+    - echo "BUILD_VERSION=$(date +%Y%m%d).$CI_JOB_ID" > build.env
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
   artifacts:
     paths:
@@ -117,7 +117,7 @@ image:base:secure:
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR/output
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base
-      --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+      --destination $CI_REGISTRY_IMAGE:base
 
 image:base-devel:secure:
   extends: .image
@@ -133,31 +133,49 @@ image:base-devel:secure:
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR/output
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base-devel
-      --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
+      --destination $CI_REGISTRY_IMAGE:base-devel
+
+.test:
+  script:
+    - pacman -Sy
+    - pacman -Qqk
+    - pacman -Syu --noconfirm docker grep
+    - docker -v
+    - id -u http
+    - locale | grep -q UTF-8
 
 test:base:
+  extends: .test
   stage: test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
   dependencies: []
-  script:
-    - pacman -Sy
-    - pacman -Qqk
-    - pacman -Syu --noconfirm docker grep
-    - docker -v
-    - id -u http
-    - locale | grep -q UTF-8
 
 test:base-devel:
+  extends: .test
   stage: test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
   dependencies: []
-  script:
-    - pacman -Sy
-    - pacman -Qqk
-    - pacman -Syu --noconfirm docker grep
-    - docker -v
-    - id -u http
-    - locale | grep -q UTF-8
+  after_script:
+    - gcc -v
+    - g++ -v
+    - make -v
+
+test:base:secure:
+  extends: .test
+  stage: test
+  tags:
+    - secure
+  image: $CI_REGISTRY_IMAGE:base
+  dependencies: []
+
+test:base-devel:secure:
+  extends: .test
+  stage: test
+  tags:
+    - secure
+  image: $CI_REGISTRY_IMAGE:base-devel
+  dependencies: []
+  after_script:
     - gcc -v
     - g++ -v
     - make -v
@@ -176,52 +194,28 @@ release:
   script:
     - python ci/release.py
 
-# Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux:base
-# publish:org:base:
-#   stage: publish
-#   image:
-#     name: gcr.io/go-containerregistry/crane:debug
-#     entrypoint: [""]
-#   needs:
-#     - job: "test:base"
-#       artifacts: true
-#   tags:
-#     - secure
-#   variables:
-#     GIT_STRATEGY: none
-#   before_script:
-#     - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#     - crane auth login -u $SOME_TECHNICAL_DOCKER_HUB_USER -p $SOME_TECHNICAL_DOCKER_HUB_PASSWORD archlinux/archlinux
-#   script:
-#     - crane cp $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG archlinux/archlinux:base
-#     - crane tag archlinux/archlinux:base latest
-#     - crane tag archlinux/archlinux:base base-$BUILD_DATE
-#   only:
-#     variables:
-#       - $SCHEDULED_PUBLISH == "TRUE"
-
-# Publish base-devel to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux:base-devel
-# publish:org:base-devel:
-#   stage: publish
-#   image:
-#     name: gcr.io/go-containerregistry/crane:debug
-#     entrypoint: [""]
-#   needs:
-#     - job: "test:base-devel"
-#       artifacts: true
-#   tags:
-#     - secure
-#   variables:
-#     GIT_STRATEGY: none
-#   before_script:
-#     - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-#     - crane auth login -u $SOME_TECHNICAL_DOCKER_HUB_USER -p $SOME_TECHNICAL_DOCKER_HUB_PASSWORD archlinux/archlinux
-#   script:
-#     - crane cp $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG archlinux/archlinux:base-devel
-#     - crane tag archlinux/archlinux:base-devel base-devel-$BUILD_DATE
-#   only:
-#     variables:
-#       - $SCHEDULED_PUBLISH == "TRUE"
+# Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
+publish:base:
+  stage: publish
+  tags:
+    - secure
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | crane auth login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - cat $DOCKER_ACCESS_TOKEN | crane auth login -u $DOCKER_USERNAME --password-stdin index.docker.io
+  script:
+    - crane cp $CI_REGISTRY_IMAGE:base archlinux/archlinux:base
+    - crane tag archlinux/archlinux:base latest
+    - crane tag archlinux/archlinux:base base-$BUILD_VERSION
+    - crane cp $CI_REGISTRY_IMAGE:base-devel archlinux/archlinux:base-devel
+    - crane tag archlinux/archlinux:base-devel base-devel-$BUILD_VERSION
+  only:
+    variables:
+      - $SCHEDULED_PUBLISH == "TRUE"
 
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
 # publish:official:

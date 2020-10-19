@@ -5,7 +5,7 @@ Should only be called from GitLab CI!
 
 Required env vars:
  - GITLAB_PROJECT_TOKEN
- - BUILD_DATE
+ - BUILD_VERSION
  - CI_PROJECT_ID
  - CI_PROJECT_URL
 """
@@ -16,14 +16,14 @@ from pathlib import Path
 import gitlab
 
 token = os.environ['GITLAB_PROJECT_TOKEN']
-build_date = os.environ['BUILD_DATE']
+build_version = os.environ['BUILD_VERSION']
 project_id = os.environ['CI_PROJECT_ID']
 project_url = os.environ['CI_PROJECT_URL']
 
 
 def upload(name):
     print(f"Uploading {name}.tar.xz")
-    filename = f"{name}-{build_date}.tar.xz"
+    filename = f"{name}-{build_version}.tar.xz"
     uploaded_url = project.upload(
         filename, filepath=f"output/{name}.tar.xz"
     )["url"]
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     print("Templating Dockerfiles")
     data = {
         "branch": "add-base-devel-tags",
-        "commit_message": f"Release {build_date}",
+        "commit_message": f"Release {build_version}",
         "actions": [
             {
                 "action": "update",
@@ -68,9 +68,9 @@ if __name__ == "__main__":
     print("Creating release")
     release = project.releases.create(
         {
-            "name": f"Release {build_date}",
-            "tag_name": build_date,
-            "description": f"Release {build_date}",
+            "name": f"Release {build_version}",
+            "tag_name": build_version,
+            "description": f"Release {build_version}",
             "ref": "add-base-devel-tags",
             "assets": {
                 "links": [
