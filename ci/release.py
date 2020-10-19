@@ -25,7 +25,7 @@ def upload(name):
     print(f"Uploading {name}.tar.xz")
     filename = f"{name}-{build_date}.tar.xz"
     uploaded_url = project.upload(
-        filename, filepath="output/{name}.tar.xz"
+        filename, filepath=f"output/{name}.tar.xz"
     )["url"]
     template = Path("Dockerfile.template").read_text()
     full_url = f"{project_url}{uploaded_url}"
