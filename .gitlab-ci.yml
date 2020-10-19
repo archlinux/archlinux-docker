@@ -20,10 +20,7 @@ lint:
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
   artifacts:
     paths:
-      - base.tar.xz
-      - base-devel.tar.xz
-      - Dockerfile.base
-      - Dockerfile.base-devel
+      - output/*
     expire_in: 2h
     reports:
       dotenv: build.env
@@ -35,7 +32,7 @@ rootfs:base:
     - schedules
     - tags
   script:
-    - make image-base
+    - make output/base.tar.xz output/Dockerfile.base
 
 rootfs:base-devel:
   extends: .rootfs
@@ -44,7 +41,7 @@ rootfs:base-devel:
     - schedules
     - tags
   script:
-    - make image-base-devel
+    - make output/base-devel.tar.xz output/Dockerfile.base-devel
 
 rootfs:base:secure:
   extends: .rootfs
@@ -55,7 +52,7 @@ rootfs:base:secure:
     - schedules
     - tags
   script:
-    - make image-base
+    - make output/base.tar.xz output/Dockerfile.base
 
 rootfs:base-devel:secure:
   extends: .rootfs
@@ -66,7 +63,7 @@ rootfs:base-devel:secure:
     - schedules
     - tags
   script:
-    - make image-base-devel
+    - make output/base-devel.tar.xz output/Dockerfile.base-devel
 
 .image:
   stage: image
