@@ -1,8 +1,2 @@
-*~
-*.orig
-/.idea
-/base.tar*
-/base-devel.tar*
-rootfs/etc/pacman.conf
-Dockerfile.base
-Dockerfile.base-devel
+build
+output

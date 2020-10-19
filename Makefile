@@ -1,22 +1,18 @@
-DOCKER_USER:=pierres
-BUILDDIR=build
-PWD=$(shell pwd)
+BUILDDIR=$(shell pwd)/build
+OUTPUTDIR=$(shell pwd)/output
 
-.PHONY: hooks
-hooks:
-	mkdir -p alpm-hooks/usr/share/libalpm/hooks
-	find /usr/share/libalpm/hooks -exec ln -sf /dev/null $(PWD)/alpm-hooks{} \;
+define rootfs
+	mkdir -vp $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks
+	find /usr/share/libalpm/hooks -exec ln -sf /dev/null $(BUILDDIR)/alpm-hooks{} \;
 
-.PHONY: rootfs-base
-rootfs-base: hooks
-	mkdir -vp $(BUILDDIR)/var/lib/pacman/
-	cp /usr/share/devtools/pacman-extra.conf rootfs/etc/pacman.conf
-	cat pacman-conf.d-noextract.conf >> rootfs/etc/pacman.conf
+	mkdir -vp $(BUILDDIR)/var/lib/pacman/ $(OUTPUTDIR)
+	install -Dm644 /usr/share/devtools/pacman-extra.conf $(BUILDDIR)/etc/pacman.conf
+	cat pacman-conf.d-noextract.conf >> $(BUILDDIR)/etc/pacman.conf
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
-		--noconfirm --dbpath $(PWD)/$(BUILDDIR)/var/lib/pacman \
-		--config rootfs/etc/pacman.conf \
+		--noconfirm --dbpath $(BUILDDIR)/var/lib/pacman \
+		--config $(BUILDDIR)/etc/pacman.conf \
 		--noscriptlet \
-		--hookdir $(PWD)/alpm-hooks/usr/share/libalpm/hooks/ base
+		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
 
 	# remove passwordless login for root (see CVE-2019-5021 for reference)
@@ -24,65 +20,38 @@ rootfs-base: hooks
 
 	# fakeroot to map the gid/uid of the builder process to root
 	# fixes #22
-	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f base.tar
-	rm -rf $(BUILDDIR) alpm-hooks
+	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f $(OUTPUTDIR)/$(1).tar
 
-.PHONY: rootfs-base-devel
-rootfs-base-devel: hooks
-	mkdir -vp $(BUILDDIR)/var/lib/pacman/
-	cp /usr/share/devtools/pacman-extra.conf rootfs/etc/pacman.conf
-	cat pacman-conf.d-noextract.conf >> rootfs/etc/pacman.conf
-	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
-		--noconfirm --dbpath $(PWD)/$(BUILDDIR)/var/lib/pacman \
-		--config rootfs/etc/pacman.conf \
-		--noscriptlet \
-		--hookdir $(PWD)/alpm-hooks/usr/share/libalpm/hooks/ base base-devel
-	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
+	cd $(OUTPUTDIR); xz -9 -T0 -f $(1).tar; sha256sum $(1).tar.xz > $(1).tar.xz.SHA256
+endef
 
-	# remove passwordless login for root (see CVE-2019-5021 for reference)
-	sed -i -e 's/^root::/root:!:/' "$(BUILDDIR)/etc/shadow"
+define dockerfile
+	sed -e "s|TEMPLATE_ROOTFS_FILE|$(1).tar.xz|" \
+	    -e "s|TEMPLATE_ROOTFS_URL|file:///$(1).tar.xz|" \
+	    -e "s|TEMPLATE_ROOTFS_HASH|$$(cat $(OUTPUTDIR)/$(1).tar.xz.SHA256)|" \
+	    Dockerfile.template > $(OUTPUTDIR)/Dockerfile.$(1)
+endef
 
-	# fakeroot to map the gid/uid of the builder process to root
-	# fixes #22
-	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f base-devel.tar
-	rm -rf $(BUILDDIR) alpm-hooks
+.PHONY: clean
+clean:
+	rm -rf $(BUILDDIR) $(OUTPUTDIR)
 
-base.tar.xz: rootfs-base
-	xz -9 -T0 -f base.tar
-	sha256sum base.tar.xz > base.tar.xz.SHA256
+$(OUTPUTDIR)/base.tar.xz:
+	$(call rootfs,base,base)
 
-base-devel.tar.xz: rootfs-base-devel
-	xz -9 -T0 -f base-devel.tar
-	sha256sum base-devel.tar.xz > base-devel.tar.xz.SHA256
+$(OUTPUTDIR)/base-devel.tar.xz:
+	$(call rootfs,base,base base-devel)
 
-.PHONY: dockerfile-image-base
-dockerfile-image-base: base.tar.xz
-	sed -e "s/TEMPLATE_ROOTFS_FILE/base.tar.xz/" \
-	    -e "s/TEMPLATE_ROOTFS_URL/file:\/\/\/base.tar.xz/" \
-	    -e "s/TEMPLATE_ROOTFS_HASH/$$(cat base.tar.xz.SHA256)/" \
-	    Dockerfile.template > Dockerfile.base
+$(OUTPUTDIR)/Dockerfile.base:
+	$(call dockerfile,base)
 
-.PHONY: dockerfile-image-base-devel
-dockerfile-image-base-devel: base-devel.tar.xz
-	sed -e "s/TEMPLATE_ROOTFS_FILE/base-devel.tar.xz/" \
-	    -e "s/TEMPLATE_ROOTFS_URL/file:\/\/\/base-devel.tar.xz/" \
-	    -e "s/TEMPLATE_ROOTFS_HASH/$$(cat base-devel.tar.xz.SHA256)/" \
-	    Dockerfile.template > Dockerfile.base-devel
+$(OUTPUTDIR)/Dockerfile.base-devel:
+	$(call dockerfile,base-devel)
 
 .PHONY: docker-image-base
-docker-image-base: dockerfile-image-base
-	docker build -f Dockerfile.base -t archlinux/archlinux:base .
+image-base: $(OUTPUTDIR)/base.tar.xz $(OUTPUTDIR)/Dockerfile.base
+	docker build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
 
 .PHONY: docker-image-base-devel
-docker-image-base-devel: dockerfile-image-base-devel
-	docker build -f Dockerfile.base-devel -t archlinux/archlinux:base-devel .
-
-.PHONY: docker-push-base
-docker-push-base:
-	docker login -u $(DOCKER_USER)
-	docker push archlinux/archlinux:base
-
-.PHONY: docker-push-base-devel
-docker-push-base-devel:
-	docker login -u $(DOCKER_USER)
-	docker push archlinux/archlinux:base-devel
+image-base-devel: $(OUTPUTDIR)/base-devel.tar.xz $(OUTPUTDIR)/Dockerfile.base-devel
+	docker build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
