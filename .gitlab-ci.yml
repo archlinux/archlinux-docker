@@ -55,6 +55,7 @@ rootfs:base:secure:
     - master
     - add-base-devel-tags
     - schedules
+  except:
     - tags
   script:
     - make $PWD/output/base.tar.xz $PWD/output/Dockerfile.base
@@ -67,6 +68,7 @@ rootfs:base-devel:secure:
     - master
     - add-base-devel-tags
     - schedules
+  except:
     - tags
   script:
     - make $PWD/output/base-devel.tar.xz $PWD/output/Dockerfile.base-devel
@@ -115,13 +117,14 @@ image:base:secure:
     - master
     - add-base-devel-tags
     - schedules
+  except:
     - tags
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR/output
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base
-      --destination $CI_REGISTRY_IMAGE:base
+      --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
 
 image:base-devel:secure:
   extends: .image
@@ -131,13 +134,44 @@ image:base-devel:secure:
     - master
     - add-base-devel-tags
     - schedules
+  except:
     - tags
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR/output
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base-devel
-      --destination $CI_REGISTRY_IMAGE:base-devel
+      --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
+
+image:base:publish:secure:
+  extends: .image
+  tags:
+    - secure
+  only:
+    - tags
+  before_script:
+    - echo "{\"auths\":{\"index.docker.io\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR/ci/base
+      --dockerfile $CI_PROJECT_DIR/ci/base/Dockerfile
+      --destination archlinux/archlinux:base-$BUILD_VERSION
+
+image:base-devel:publish:secure:
+  extends: .image
+  tags:
+    - secure
+  only:
+    - tags
+  before_script:
+    - echo "{\"auths\":{\"index.docker.io\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR/ci/base-devel
+      --dockerfile $CI_PROJECT_DIR/ci/base-devel/Dockerfile
+      --destination archlinux/archlinux:base-devel-$BUILD_VERSION
 
 .test:
   dependencies: []
@@ -172,32 +206,6 @@ test:base-devel:
     - g++ -v
     - make -v
 
-test:base:secure:
-  extends: .test
-  tags:
-    - secure
-  only:
-    - master
-    - add-base-devel-tags
-    - schedules
-    - tags
-  image: $CI_REGISTRY_IMAGE:base
-
-test:base-devel:secure:
-  extends: .test
-  tags:
-    - secure
-  only:
-    - master
-    - add-base-devel-tags
-    - schedules
-    - tags
-  image: $CI_REGISTRY_IMAGE:base-devel
-  after_script:
-    - gcc -v
-    - g++ -v
-    - make -v
-
 release:
   stage: release
   tags:
@@ -222,20 +230,14 @@ publish:
     entrypoint: [""]
   variables:
     GIT_STRATEGY: none
-  before_script:
-    - echo $CI_REGISTRY_PASSWORD | crane auth login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - cat $DOCKER_ACCESS_TOKEN | crane auth login -u $DOCKER_USERNAME --password-stdin index.docker.io
-  script:
-    - crane cp $CI_REGISTRY_IMAGE:base archlinux/archlinux:base
-    - crane tag archlinux/archlinux:base latest
-    - crane tag archlinux/archlinux:base base-$BUILD_VERSION
-    - crane cp $CI_REGISTRY_IMAGE:base-devel archlinux/archlinux:base-devel
-    - crane tag archlinux/archlinux:base-devel base-devel-$BUILD_VERSION
   only:
-    refs:
-      - schedules
-    variables:
-      - $SCHEDULED_PUBLISH == "TRUE"
+    - tags
+  before_script:
+    - echo $DOCKER_ACCESS_TOKEN | crane auth login -u $DOCKER_USERNAME --password-stdin index.docker.io
+  script:
+    - crane tag archlinux/archlinux:base-$BUILD_VERSION base
+    - crane tag archlinux/archlinux:base-$BUILD_VERSION latest
+    - crane tag archlinux/archlinux:base-devel-$BUILD_VERSION base-devel
 
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
 # publish:official:
