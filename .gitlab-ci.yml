@@ -82,8 +82,8 @@ image:base:
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR
-      --dockerfile $CI_PROJECT_DIR/Dockerfile.base
+      --context $CI_PROJECT_DIR/output
+      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base
       --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
 
 image:base-devel:
@@ -95,8 +95,8 @@ image:base-devel:
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR
-      --dockerfile $CI_PROJECT_DIR/Dockerfile.base-devel
+      --context $CI_PROJECT_DIR/output
+      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base-devel
       --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
 
 image:base:secure:
@@ -110,8 +110,8 @@ image:base:secure:
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR
-      --dockerfile $CI_PROJECT_DIR/Dockerfile.base
+      --context $CI_PROJECT_DIR/output
+      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base
       --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
 
 image:base-devel:secure:
@@ -125,8 +125,8 @@ image:base-devel:secure:
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR
-      --dockerfile $CI_PROJECT_DIR/Dockerfile.base-devel
+      --context $CI_PROJECT_DIR/output
+      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base-devel
       --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
 
 # test:base:
