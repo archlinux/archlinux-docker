@@ -63,12 +63,12 @@ if __name__ == "__main__":
         "actions": [
             {
                 "action": "update",
-                "file_path": "base/Dockerfile",
+                "file_path": "ci/base/Dockerfile",
                 "content": base_replaced,
             },
             {
                 "action": "update",
-                "file_path": "base-devel/Dockerfile",
+                "file_path": "ci/base-devel/Dockerfile",
                 "content": base_devel_replaced,
             },
         ],
