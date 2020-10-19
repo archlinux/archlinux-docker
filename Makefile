@@ -40,7 +40,7 @@ $(OUTPUTDIR)/base.tar.xz:
 	$(call rootfs,base,base)
 
 $(OUTPUTDIR)/base-devel.tar.xz:
-	$(call rootfs,base,base base-devel)
+	$(call rootfs,base-devel,base base-devel)
 
 $(OUTPUTDIR)/Dockerfile.base:
 	$(call dockerfile,base)
