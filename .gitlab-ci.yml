@@ -32,7 +32,7 @@ rootfs:base:
     - schedules
     - tags
   script:
-    - make output/base.tar.xz output/Dockerfile.base
+    - make $PWD/output/base.tar.xz $PWD/output/Dockerfile.base
 
 rootfs:base-devel:
   extends: .rootfs
@@ -41,7 +41,7 @@ rootfs:base-devel:
     - schedules
     - tags
   script:
-    - make output/base-devel.tar.xz output/Dockerfile.base-devel
+    - make $PWD/output/base-devel.tar.xz $PWD/output/Dockerfile.base-devel
 
 rootfs:base:secure:
   extends: .rootfs
@@ -52,7 +52,7 @@ rootfs:base:secure:
     - schedules
     - tags
   script:
-    - make output/base.tar.xz output/Dockerfile.base
+    - make $PWD/output/base.tar.xz $PWD/output/Dockerfile.base
 
 rootfs:base-devel:secure:
   extends: .rootfs
@@ -63,7 +63,7 @@ rootfs:base-devel:secure:
     - schedules
     - tags
   script:
-    - make output/base-devel.tar.xz output/Dockerfile.base-devel
+    - make $PWD/output/base-devel.tar.xz $PWD/output/Dockerfile.base-devel
 
 .image:
   stage: image
