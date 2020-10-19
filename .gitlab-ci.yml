@@ -31,6 +31,7 @@ rootfs:base:
   extends: .rootfs
   except:
     - master
+    - add-base-devel-tags
     - schedules
     - tags
   script:
@@ -40,6 +41,7 @@ rootfs:base-devel:
   extends: .rootfs
   except:
     - master
+    - add-base-devel-tags
     - schedules
     - tags
   script:
@@ -51,6 +53,7 @@ rootfs:base:secure:
     - secure
   only:
     - master
+    - add-base-devel-tags
     - schedules
     - tags
   script:
@@ -62,6 +65,7 @@ rootfs:base-devel:secure:
     - secure
   only:
     - master
+    - add-base-devel-tags
     - schedules
     - tags
   script:
@@ -136,6 +140,8 @@ image:base-devel:secure:
       --destination $CI_REGISTRY_IMAGE:base-devel
 
 .test:
+  dependencies: []
+  stage: test
   script:
     - pacman -Sy
     - pacman -Qqk
@@ -146,15 +152,21 @@ image:base-devel:secure:
 
 test:base:
   extends: .test
-  stage: test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
-  dependencies: []
+  except:
+    - master
+    - add-base-devel-tags
+    - schedules
+    - tags
 
 test:base-devel:
   extends: .test
-  stage: test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-  dependencies: []
+  except:
+    - master
+    - add-base-devel-tags
+    - schedules
+    - tags
   after_script:
     - gcc -v
     - g++ -v
@@ -162,19 +174,25 @@ test:base-devel:
 
 test:base:secure:
   extends: .test
-  stage: test
   tags:
     - secure
+  only:
+    - master
+    - add-base-devel-tags
+    - schedules
+    - tags
   image: $CI_REGISTRY_IMAGE:base
-  dependencies: []
 
 test:base-devel:secure:
   extends: .test
-  stage: test
   tags:
     - secure
+  only:
+    - master
+    - add-base-devel-tags
+    - schedules
+    - tags
   image: $CI_REGISTRY_IMAGE:base-devel
-  dependencies: []
   after_script:
     - gcc -v
     - g++ -v
@@ -195,7 +213,7 @@ release:
     - python ci/release.py
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
-publish:base:
+publish:
   stage: publish
   tags:
     - secure
@@ -214,6 +232,8 @@ publish:base:
     - crane cp $CI_REGISTRY_IMAGE:base-devel archlinux/archlinux:base-devel
     - crane tag archlinux/archlinux:base-devel base-devel-$BUILD_VERSION
   only:
+    refs:
+      - schedules
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
 
