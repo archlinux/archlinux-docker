@@ -169,8 +169,8 @@ release:
   only:
     refs:
       - schedules
-    # variables:
-    #   - $SCHEDULED_PUBLISH == "TRUE"
+    variables:
+      - $SCHEDULED_PUBLISH == "TRUE"
   before_script:
     - pacman -Syu python-gitlab
   script:
