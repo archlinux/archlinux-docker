@@ -129,33 +129,33 @@ image:base-devel:secure:
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base-devel
       --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
 
-# test:base:
-#   stage: test
-#   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
-#   dependencies: []
-#   script:
-#     - pacman -Sy
-#     - pacman -Qqk
-#     - pacman -Syu --noconfirm docker grep
-#     - docker -v
-#     - id -u http
-#     - locale | grep -q UTF-8
-#
-# test:base-devel:
-#   stage: test
-#   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-#   dependencies: []
-#   script:
-#     - pacman -Sy
-#     - pacman -Qqk
-#     - pacman -Syu --noconfirm docker grep
-#     - docker -v
-#     - id -u http
-#     - locale | grep -q UTF-8
-#     - gcc -v
-#     - g++ -v
-#     - make -v
-#
+test:base:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+  dependencies: []
+  script:
+    - pacman -Sy
+    - pacman -Qqk
+    - pacman -Syu --noconfirm docker grep
+    - docker -v
+    - id -u http
+    - locale | grep -q UTF-8
+
+test:base-devel:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
+  dependencies: []
+  script:
+    - pacman -Sy
+    - pacman -Qqk
+    - pacman -Syu --noconfirm docker grep
+    - docker -v
+    - id -u http
+    - locale | grep -q UTF-8
+    - gcc -v
+    - g++ -v
+    - make -v
+
 # release:
 #   stage: release
 #   image: archlinux:latest
