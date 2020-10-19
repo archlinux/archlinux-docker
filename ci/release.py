@@ -20,41 +20,31 @@ build_date = os.environ['BUILD_DATE']
 project_id = os.environ['CI_PROJECT_ID']
 project_url = os.environ['CI_PROJECT_URL']
 
+
+def upload(name):
+    print(f"Uploading {name}.tar.xz")
+    filename = f"{name}-{build_date}.tar.xz"
+    uploaded_url = project.upload(
+        filename, filepath="output/{name}.tar.xz"
+    )["url"]
+    template = Path("Dockerfile.template").read_text()
+    full_url = f"{project_url}{uploaded_url}"
+    replaced = template.replace("TEMPLATE_ROOTFS_URL", full_url)
+    hash = f"{Path('output/{name}.tar.xz.SHA256').read_text()[0:64]}  {filename}"
+    replaced = replaced.replace(
+        "TEMPLATE_ROOTFS_HASH", hash
+    )
+    # Remove the line containing TEMPLATE_ROOTFS_FILE
+    replaced = re.sub(".*TEMPLATE_ROOTFS_FILE.*\n", "", replaced)
+    return replaced, full_url
+
+
 if __name__ == "__main__":
     gl = gitlab.Gitlab("https://gitlab.archlinux.org", token)
     project = gl.projects.get(project_id)
 
-    print("Uploading base.tar.xz")
-    base_filename = f"base-{build_date}.tar.xz"
-    base_uploaded_url = project.upload(
-        base_filename, filepath="base.tar.xz"
-    )["url"]
-    base_template = Path("Dockerfile.template").read_text()
-    base_full_url = f"{project_url}{base_uploaded_url}"
-    base_replaced = base_template.replace("TEMPLATE_ROOTFS_URL", base_full_url)
-    base_hash = f"{Path('base.tar.xz.SHA256').read_text()[0:64]}  {base_filename}"
-    base_replaced = base_replaced.replace(
-        "TEMPLATE_ROOTFS_HASH", base_hash
-    )
-    # Remove the line containing TEMPLATE_ROOTFS_FILE
-    base_replaced = re.sub(".*TEMPLATE_ROOTFS_FILE.*\n", "", base_replaced)
-
-    print("Uploading base-devel.tar.xz")
-    base_devel_filename = f"base-devel-{build_date}.tar.xz"
-    base_devel_uploaded_url = project.upload(
-        base_devel_filename, filepath="base-devel.tar.xz"
-    )["url"]
-    base_devel_template = Path("Dockerfile.template").read_text()
-    base_devel_full_url = f"{project_url}{base_devel_uploaded_url}"
-    base_devel_replaced = base_devel_template.replace(
-        "TEMPLATE_ROOTFS_URL", base_devel_full_url
-    )
-    base_devel_hash = f"{Path('base-devel.tar.xz.SHA256').read_text()[0:64]}  {base_devel_filename}"
-    base_devel_replaced = base_devel_replaced.replace(
-        "TEMPLATE_ROOTFS_HASH", base_devel_hash
-    )
-    # Remove the line containing TEMPLATE_ROOTFS_FILE
-    base_devel_replaced = re.sub(".*TEMPLATE_ROOTFS_FILE.*\n", "", base_devel_replaced)
+    base_replaced, base_full_url = upload("base")
+    base_devel_replaced, base_devel_full_url = upload("base-devel")
 
     print("Templating Dockerfiles")
     data = {

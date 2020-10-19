@@ -156,24 +156,21 @@ test:base-devel:
     - g++ -v
     - make -v
 
-# release:
-#   stage: release
-#   image: archlinux:latest
-#   only:
-#     refs:
-#       - master
-#       - add-base-devel-tags
-#     variables:
-#       - $SCHEDULED_PUBLISH == "TRUE"
-#   needs:
-#     - job: "test:base"
-#     - job: "test:base-devel"
-#   before_script:
-#     - pacman -Syu python-gitlab
-#   script:
-#     - python ci/release.py
-#   tags:
-#     - secure
+release:
+  stage: release
+  image: archlinux:latest
+  only:
+    refs:
+      - master
+      - add-base-devel-tags
+    variables:
+      - $SCHEDULED_PUBLISH == "TRUE"
+  before_script:
+    - pacman -Syu python-gitlab
+  script:
+    - python ci/release.py
+  tags:
+    - secure
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux:base
 # publish:org:base:
