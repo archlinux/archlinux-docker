@@ -105,6 +105,7 @@ image:base:secure:
     - secure
   only:
     - master
+    - add-base-devel-tags
     - schedules
     - tags
   script:
@@ -120,6 +121,7 @@ image:base-devel:secure:
     - secure
   only:
     - master
+    - add-base-devel-tags
     - schedules
     - tags
   script:
