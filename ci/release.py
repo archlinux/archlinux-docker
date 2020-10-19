@@ -30,7 +30,7 @@ def upload(name):
     template = Path("Dockerfile.template").read_text()
     full_url = f"{project_url}{uploaded_url}"
     replaced = template.replace("TEMPLATE_ROOTFS_URL", full_url)
-    hash = f"{Path('output/{name}.tar.xz.SHA256').read_text()[0:64]}  {filename}"
+    hash = f"Path('output/{name}.tar.xz.SHA256').read_text()[0:64]  {filename}"
     replaced = replaced.replace(
         "TEMPLATE_ROOTFS_HASH", hash
     )
