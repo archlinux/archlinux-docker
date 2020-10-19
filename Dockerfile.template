@@ -6,7 +6,7 @@ RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effecti
     mkdir /rootfs && \
     tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
 
-FROM scratch AS base
+FROM scratch AS root
 COPY --from=verify /rootfs/ /
 
 # manually run all alpm hooks that can't be run inside the fakechroot
