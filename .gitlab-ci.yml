@@ -172,7 +172,7 @@ release:
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
   before_script:
-    - pacman -Syu python-gitlab
+    - pacman -Syu --noconfirm python-gitlab
   script:
     - python ci/release.py
 
