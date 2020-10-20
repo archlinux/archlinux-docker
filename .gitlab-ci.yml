@@ -197,8 +197,8 @@ test:base:
     refs:
       - tags
     changes:
-      - ci/base/Dockerfile
-      - ci/base-devel/Dockerfile
+      - "ci/base/Dockerfile"
+      - "ci/base-devel/Dockerfile"
 
 test:base-devel:
   extends: .test
@@ -207,8 +207,8 @@ test:base-devel:
     refs:
       - tags
     changes:
-      - ci/base/Dockerfile
-      - ci/base-devel/Dockerfile
+      - "ci/base/Dockerfile"
+      - "ci/base-devel/Dockerfile"
   after_script:
     - gcc -v
     - g++ -v
