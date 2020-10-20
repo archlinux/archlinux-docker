@@ -1,7 +1,7 @@
 FROM archlinux:latest AS verify
 SHELL ["/bin/bash", "-c"]
-RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/uploads/f07d6ddc7fc4b3611b6ea7b58515f5a2/base-devel-20201020.6441.tar.xz)" && \
-    sha256sum -c <<< "5e67b9b2ffada0161a68555173e765d85630196a34470d31535cbf8c699f7acc  base-devel-20201020.6441.tar.xz" && \
+RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/uploads/9e782ae1da761b3bec8a4008ee8bedfc/base-devel-20201020.6467.tar.xz)" && \
+    sha256sum -c <<< "c03455a6aa9e4a479fe936aa9905748136a9bb8a0cd705a5dd8b9d8cf37a6f43  base-devel-20201020.6467.tar.xz" && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
 
