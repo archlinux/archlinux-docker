@@ -194,21 +194,13 @@ test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
   except:
-    refs:
-      - tags
-    changes:
-      - "ci/base/Dockerfile"
-      - "ci/base-devel/Dockerfile"
+    - tags
 
 test:base-devel:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
   except:
-    refs:
-      - tags
-    changes:
-      - "ci/base/Dockerfile"
-      - "ci/base-devel/Dockerfile"
+    - tags
   after_script:
     - gcc -v
     - g++ -v
