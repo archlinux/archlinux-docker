@@ -149,7 +149,6 @@ image:base-devel:secure:
 
 image:base:publish:secure:
   extends: .image
-  dependencies: []
   tags:
     - secure
   only:
@@ -165,7 +164,6 @@ image:base:publish:secure:
 
 image:base-devel:publish:secure:
   extends: .image
-  dependencies: []
   tags:
     - secure
   only:
