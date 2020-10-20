@@ -70,7 +70,7 @@ if __name__ == "__main__":
     release = project.releases.create(
         {
             "name": f"Release {build_version}",
-            "tag_name": build_version,
+            "tag_name": f"v{build_version}",
             "description": f"Release {build_version}",
             "ref": "add-base-devel-tags",
             "assets": {
