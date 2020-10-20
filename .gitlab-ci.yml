@@ -119,6 +119,8 @@ image:base:secure:
     - schedules
   except:
     - tags
+  before_script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -136,6 +138,8 @@ image:base-devel:secure:
     - schedules
   except:
     - tags
+  before_script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
