@@ -204,14 +204,26 @@ image:base-devel:publish:secure:
 test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+  only:
+    variables:
+      # Workaround for https://gitlab.com/gitlab-org/gitlab/-/issues/259663
+      # This is fine as at this point we're sure that the release works anyway.
+      - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
   except:
-    - tags
+    refs:
+      - tags
 
 test:base-devel:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
+  only:
+    variables:
+      # Workaround for https://gitlab.com/gitlab-org/gitlab/-/issues/259663
+      # This is fine as at this point we're sure that the release works anyway.
+      - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
   except:
-    - tags
+    refs:
+      - tags
   after_script:
     - gcc -v
     - g++ -v
