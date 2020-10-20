@@ -145,6 +145,7 @@ image:base-devel:secure:
 
 image:base:publish:secure:
   extends: .image
+  dependencies: []
   tags:
     - secure
   only:
@@ -160,6 +161,7 @@ image:base:publish:secure:
 
 image:base-devel:publish:secure:
   extends: .image
+  dependencies: []
   tags:
     - secure
   only:
@@ -174,8 +176,8 @@ image:base-devel:publish:secure:
       --destination archlinux/archlinux:base-devel-$BUILD_VERSION
 
 .test:
-  dependencies: []
   stage: test
+  dependencies: []
   script:
     - pacman -Sy
     - pacman -Qqk
@@ -188,18 +190,12 @@ test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
   except:
-    - master
-    - add-base-devel-tags
-    - schedules
     - tags
 
 test:base-devel:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
   except:
-    - master
-    - add-base-devel-tags
-    - schedules
     - tags
   after_script:
     - gcc -v
