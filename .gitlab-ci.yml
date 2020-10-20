@@ -155,7 +155,7 @@ image:base:publish:secure:
   only:
     - tags
   before_script:
-    - echo "{\"auths\":{\"index.docker.io\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -171,7 +171,7 @@ image:base-devel:publish:secure:
   only:
     - tags
   before_script:
-    - echo "{\"auths\":{\"index.docker.io\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -194,13 +194,21 @@ test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
   except:
-    - tags
+    refs:
+      - tags
+    changes:
+      - ci/base/Dockerfile
+      - ci/base-devel/Dockerfile
 
 test:base-devel:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
   except:
-    - tags
+    refs:
+      - tags
+    changes:
+      - ci/base/Dockerfile
+      - ci/base-devel/Dockerfile
   after_script:
     - gcc -v
     - g++ -v
