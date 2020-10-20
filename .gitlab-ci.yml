@@ -15,17 +15,30 @@ lint:
   # DL3007: We use the latest tag for multistage build
   script: hadolint --ignore DL3007 --ignore DL3020 Dockerfile.template
 
+get_version:
+  stage: .pre
+  script:
+    - |
+      # If we're building a tagged release, use the tag (without the 'v' prefix) as the
+      # BUILD_VERSION. Otherwise, determine a new BUILD_VERSION.
+      if [[ -n "$CI_COMMIT_TAG" ]]; then
+        echo "BUILD_VERSION=${CI_COMMIT_TAG/v/}" > build.env
+      else
+        echo "BUILD_VERSION=$(date +%Y%m%d).$CI_JOB_ID" > build.env
+      fi
+    - export $(< build.env)
+  artifacts:
+    reports:
+      dotenv: build.env
+
 .rootfs:
   stage: rootfs
   before_script:
-    - echo "BUILD_VERSION=$(date +%Y%m%d).$CI_JOB_ID" > build.env
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
   artifacts:
     paths:
       - output/*
     expire_in: 2h
-    reports:
-      dotenv: build.env
 
 rootfs:base:
   extends: .rootfs
@@ -119,8 +132,8 @@ image:base:secure:
     - schedules
   except:
     - tags
-  before_script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
+  # before_script:
+  #   - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -138,8 +151,8 @@ image:base-devel:secure:
     - schedules
   except:
     - tags
-  before_script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
+  # before_script:
+  #   - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
