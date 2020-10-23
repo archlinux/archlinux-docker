@@ -174,11 +174,12 @@ upload_and_commit_rootfs:
   script:
     - |
       for group in base base-devel; do
-        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
+        sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
         sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
         sed -i "s|TEMPLATE_ROOTFS_URL|${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz|" ci/${group}/Dockerfile
-        sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
         sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" ci/${group}/Dockerfile
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
       done
       curl --request POST
         --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
@@ -206,7 +207,9 @@ release:
     - release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}"
         --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags"
         --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz"}'
+        --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz.SHA256"}'
         --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz"}'
+        --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz.SHA256"}'
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 publish:
