@@ -181,7 +181,8 @@ upload_and_commit_rootfs:
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
       done
-    - curl --request POST
+    - >
+      curl --request POST
       --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
       --form "branch-add-base-devel-tags"
       --form "commit_message=Release ${BUILD_VERSION}"
