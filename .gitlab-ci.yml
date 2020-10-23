@@ -172,7 +172,8 @@ upload_and_commit_rootfs:
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
   script:
-    - for group in base base-devel; do
+    - |
+      for group in base base-devel; do
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
         sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
         sed -i "s|TEMPLATE_ROOTFS_URL|${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz|" ci/${group}/Dockerfile
