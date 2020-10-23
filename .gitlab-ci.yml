@@ -181,17 +181,17 @@ upload_and_commit_rootfs:
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
       done
-      curl --request POST
-        --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
-        --form "branch-add-base-devel-tags"
-        --form "commit_message=Release ${BUILD_VERSION}"
-        --form "actions[][action]=update"
-        --form "actions[][file_path]=ci/base/Dockerfile"
-        --form "actions[][content]=<ci/base/Dockerfile"
-        --form "actions[][action]=update"
-        --form "actions[][file_path]=ci/base-devel/Dockerfile"
-        --form "actions[][content]=<ci/base-devel/Dockerfile"
-        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
+    - curl --request POST
+      --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
+      --form "branch-add-base-devel-tags"
+      --form "commit_message=Release ${BUILD_VERSION}"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=ci/base/Dockerfile"
+      --form "actions[][content]=<ci/base/Dockerfile"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=ci/base-devel/Dockerfile"
+      --form "actions[][content]=<ci/base-devel/Dockerfile"
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
 
 release:
   stage: release
@@ -205,11 +205,11 @@ release:
       - $SCHEDULED_PUBLISH == "TRUE"
   script:
     - release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}"
-        --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags"
-        --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz"}'
-        --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz.SHA256"}'
-        --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz"}'
-        --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz.SHA256"}'
+      --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags"
+      --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz"}'
+      --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz.SHA256"}'
+      --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz"}'
+      --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz.SHA256"}'
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 publish:
