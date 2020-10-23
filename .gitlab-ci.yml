@@ -207,7 +207,15 @@ release:
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
   script:
-    - release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}"
+    - |
+      echo release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}"
+      echo --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags"
+      echo --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz"}'
+      echo --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz.SHA256"}'
+      echo --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz"}'
+      echo --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz.SHA256"}'
+    - >
+      release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}"
       --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags"
       --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz"}'
       --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz.SHA256","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz.SHA256"}'
