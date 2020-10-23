@@ -29,6 +29,8 @@ get_version:
       fi
     - export $(< build.env)
     - echo "PACKAGE_REGISTRY_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/rootfs/${BUILD_VERSION}" >> build.env
+    - export $(< build.env)
+    - echo ${PACKAGE_REGISTRY_URL}
   artifacts:
     reports:
       dotenv: build.env
