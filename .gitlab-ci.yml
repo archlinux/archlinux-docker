@@ -184,7 +184,7 @@ upload_and_commit_rootfs:
     - >
       curl --request POST
       --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
-      --form "branch-add-base-devel-tags"
+      --form "branch=add-base-devel-tags"
       --form "commit_message=Release ${BUILD_VERSION}"
       --form "actions[][action]=update"
       --form "actions[][file_path]=ci/base/Dockerfile"
