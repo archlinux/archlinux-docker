@@ -1,7 +1,17 @@
+# We're using a multistage Docker build here in order to allow us to release a self-verifying
+# Docker image when built on the official Docker infrastructure.
+# They require us to verify the source integrity in some way while making sure that this is a
+# reproducible build.
+# See https://github.com/docker-library/official-images#image-build
+# In order to achieve this, we externally host the rootfs archives and their checksums and then
+# just download and verify it in the first stage of this Dockerfile.
+# The second stage is for actually configuring the system a little bit.
+# Some templating is done in order to allow us to easily build different configurations and to
+# allow us to automate the releaes process.
 FROM archlinux:latest AS verify
 SHELL ["/bin/bash", "-c"]
-RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/uploads/93e7d135858872fa3aa626a5fe2719ea/base-20201020.6556.tar.xz)" && \
-    sha256sum -c <<< "c980d72136d9db1d82be7844a09341f0ccfc211a2a0ac94d1c471d9aa4f2fba3  base-20201020.6556.tar.xz" && \
+RUN ROOTFS="$(curl --continue-at - --remote-name --write-out "%{filename_effective}" https://gitlab.archlinux.org/api/v4/projects/10185/packages/generic/rootfs/20201023.0.6754/base-20201023.0.6754.tar.xz)" && \
+    sha256sum -c <<< "ded8467a888c78ab0838fb7841a58b45c5004685fde82631ff787d4b1ce60dd7  base-20201023.0.6754.tar.xz" && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
 
