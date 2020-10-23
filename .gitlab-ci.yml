@@ -6,6 +6,7 @@ stages:
   - rootfs
   - image
   - test
+  - upload
   - release
   - publish
 
@@ -27,6 +28,7 @@ get_version:
         echo "BUILD_VERSION=$(date +%Y%m%d).$CI_JOB_ID" > build.env
       fi
     - export $(< build.env)
+    - echo "PACKAGE_REGISTRY_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/rootfs/${BUILD_VERSION}" >> build.env
   artifacts:
     reports:
       dotenv: build.env
@@ -159,8 +161,9 @@ test:base-devel:
     - g++ -v
     - make -v
 
-release:
-  stage: release
+upload_and_commit_rootfs:
+  stage: upload
+  image: curlimages/curl:latest
   tags:
     - secure
   only:
@@ -168,10 +171,41 @@ release:
       - schedules
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
-  before_script:
-    - pacman -Syu --noconfirm python-gitlab
   script:
-    - python ci/release.py
+    - for group in base base-devel; do
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
+        sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
+        sed -i "s|TEMPLATE_ROOTFS_URL|${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz|" ci/${group}/Dockerfile
+        sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
+        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" ci/${group}/Dockerfile
+      done
+      curl --request POST
+        --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
+        --form "branch-add-base-devel-tags"
+        --form "commit_message=Release ${BUILD_VERSION}"
+        --form "actions[][action]=update"
+        --form "actions[][file_path]=ci/base/Dockerfile"
+        --form "actions[][content]=<ci/base/Dockerfile"
+        --form "actions[][action]=update"
+        --form "actions[][file_path]=ci/base-devel/Dockerfile"
+        --form "actions[][content]=<ci/base-devel/Dockerfile"
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  tags:
+    - secure
+  only:
+    refs:
+      - schedules
+    variables:
+      - $SCHEDULED_PUBLISH == "TRUE"
+  script:
+    - release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}"
+        --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags"
+        --assets-link '{"name":"base-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz"}'
+        --assets-link '{"name":"base-devel-${BUILD_VERSION}.tar.xz","url":"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.xz"}'
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 publish:
