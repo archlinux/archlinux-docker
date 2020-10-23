@@ -40,27 +40,20 @@ get_version:
       - output/*
     expire_in: 2h
 
-rootfs:base:
+rootfs:
   extends: .rootfs
   except:
     - master
     - add-base-devel-tags
     - schedules
     - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   script:
-    - make $PWD/output/base.tar.xz $PWD/output/Dockerfile.base
+    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
 
-rootfs:base-devel:
-  extends: .rootfs
-  except:
-    - master
-    - add-base-devel-tags
-    - schedules
-    - tags
-  script:
-    - make $PWD/output/base-devel.tar.xz $PWD/output/Dockerfile.base-devel
-
-rootfs:base:secure:
+rootfs:secure:
   extends: .rootfs
   tags:
     - secure
@@ -70,59 +63,38 @@ rootfs:base:secure:
     - schedules
   except:
     - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   script:
-    - make $PWD/output/base.tar.xz $PWD/output/Dockerfile.base
-
-rootfs:base-devel:secure:
-  extends: .rootfs
-  tags:
-    - secure
-  only:
-    - master
-    - add-base-devel-tags
-    - schedules
-  except:
-    - tags
-  script:
-    - make $PWD/output/base-devel.tar.xz $PWD/output/Dockerfile.base-devel
+    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
 
 .image:
   stage: image
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
+  script:
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR/output
+      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.$GROUP
+      --destination $CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG
+
+image:build:
+  extends: .image
+  except:
+    - master
+    - add-base-devel-tags
+    - schedules
+    - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
-image:base:
-  extends: .image
-  except:
-    - master
-    - add-base-devel-tags
-    - schedules
-    - tags
-  script:
-    - /kaniko/executor
-      --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR/output
-      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base
-      --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
-
-image:base-devel:
-  extends: .image
-  except:
-    - master
-    - add-base-devel-tags
-    - schedules
-    - tags
-  script:
-    - /kaniko/executor
-      --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR/output
-      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base-devel
-      --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-
-image:base:secure:
+image:build:secure:
   extends: .image
   tags:
     - secure
@@ -132,67 +104,41 @@ image:base:secure:
     - schedules
   except:
     - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
-  script:
-    - /kaniko/executor
-      --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR/output
-      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base
-      --destination $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
 
-image:base-devel:secure:
-  extends: .image
-  tags:
-    - secure
-  only:
-    - master
-    - add-base-devel-tags
-    - schedules
-  except:
-    - tags
-  before_script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
-  script:
-    - /kaniko/executor
-      --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR/output
-      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.base-devel
-      --destination $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-
-image:base:publish:secure:
+image:publish:secure:
   extends: .image
   tags:
     - secure
   only:
     - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   before_script:
     - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR/ci/base
-      --dockerfile $CI_PROJECT_DIR/ci/base/Dockerfile
-      --destination archlinux/archlinux:base-$BUILD_VERSION
-
-image:base-devel:publish:secure:
-  extends: .image
-  tags:
-    - secure
-  only:
-    - tags
-  before_script:
-    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
-  script:
-    - /kaniko/executor
-      --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR/ci/base-devel
-      --dockerfile $CI_PROJECT_DIR/ci/base-devel/Dockerfile
-      --destination archlinux/archlinux:base-devel-$BUILD_VERSION
+      --context $CI_PROJECT_DIR/ci/$GROUP
+      --dockerfile $CI_PROJECT_DIR/ci/$GROUP/Dockerfile
+      --destination archlinux/archlinux:$GROUP-$BUILD_VERSION
 
 .test:
   stage: test
   dependencies: []
+  only:
+    variables:
+      # Workaround for https://gitlab.com/gitlab-org/gitlab/-/issues/259663
+      # This is fine as at this point we're sure that the release works anyway.
+      - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
+  except:
+    refs:
+      - tags
   script:
     - pacman -Sy
     - pacman -Qqk
@@ -204,26 +150,10 @@ image:base-devel:publish:secure:
 test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
-  only:
-    variables:
-      # Workaround for https://gitlab.com/gitlab-org/gitlab/-/issues/259663
-      # This is fine as at this point we're sure that the release works anyway.
-      - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
-  except:
-    refs:
-      - tags
 
 test:base-devel:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-  only:
-    variables:
-      # Workaround for https://gitlab.com/gitlab-org/gitlab/-/issues/259663
-      # This is fine as at this point we're sure that the release works anyway.
-      - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
-  except:
-    refs:
-      - tags
   after_script:
     - gcc -v
     - g++ -v
