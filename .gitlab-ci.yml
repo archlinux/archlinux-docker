@@ -205,7 +205,7 @@ release:
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
   before_script:
-    - apk add jq
+    - apk add jq curl
   script:
     - |
       package_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages" | jq ".[] | select(.version == \"${BUILD_VERSION}\" | .id)")
