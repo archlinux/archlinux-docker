@@ -203,7 +203,7 @@ release:
       echo "${base_url}"
       base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz.SHA256)
       echo "${base_sha_url}"
-      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
+      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz)
       echo "${base_devel_url}"
       base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz.SHA256)
       echo "${base_devel_sha_url}"
