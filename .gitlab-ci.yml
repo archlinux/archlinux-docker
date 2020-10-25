@@ -216,11 +216,11 @@ release:
 
       # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
-      release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}"
-      --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags"
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_id}/download\"}"
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_sha_id}/download\"}"
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_devel_id}/download\"}"
+      release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}" \
+      --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags" \
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_id}/download\"}" \
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_sha_id}/download\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_devel_id}/download\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_devel_sha_id}/download\"}"
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
