@@ -10,8 +10,8 @@
 # allow us to automate the releaes process.
 FROM archlinux:latest AS verify
 SHELL ["/bin/bash", "-c"]
-RUN ROOTFS="$(curl -OJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/53/download)" && \
-    sha256sum -c <<< "452e26d9775a76e95bd582b96c742844a3e27b90147e1f6e1bc6dd3b82e8a558  base-devel-20201025.0.7220.tar.xz" && \
+RUN ROOTFS="$(curl -OJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/57/download)" && \
+    sha256sum -c <<< "623ec2fe997137b2f54e01bcb44216232c92699404ed7e20b332f830b9dffd0e  base-devel-20201025.0.7257.tar.xz" && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
 
