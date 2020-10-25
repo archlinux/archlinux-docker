@@ -161,9 +161,9 @@ test:base-devel:
     - g++ -v
     - make -v
 
-upload_and_commit_rootfs:
-  stage: upload
-  image: curlimages/curl:latest
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
   tags:
     - secure
   only:
@@ -171,6 +171,8 @@ upload_and_commit_rootfs:
       - schedules
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
+  before_script:
+    - apk add jq curl
   script:
     - |
       for group in base base-devel; do
@@ -194,20 +196,6 @@ upload_and_commit_rootfs:
       --form "actions[][file_path]=ci/base-devel/Dockerfile"
       --form "actions[][content]=<ci/base-devel/Dockerfile"
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
-
-release:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  tags:
-    - secure
-  only:
-    refs:
-      - schedules
-    variables:
-      - $SCHEDULED_PUBLISH == "TRUE"
-  before_script:
-    - apk add jq curl
-  script:
     - |
       base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
       base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz.SHA256)
