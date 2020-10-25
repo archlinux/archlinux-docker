@@ -178,7 +178,7 @@ upload_and_commit_rootfs:
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
         sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
-        package_url=$(ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.xz)
+        package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.xz)
         sed -i "s|TEMPLATE_ROOTFS_URL|${package_url}|" ci/${group}/Dockerfile
         sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" ci/${group}/Dockerfile
       done
@@ -209,10 +209,10 @@ release:
     - apk add jq curl
   script:
     - |
-      base_url=$(ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
-      base_sha_url=$(ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz.SHA256)
-      base_devel_url=$(ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
-      base_devel_sha_url=$(ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz.SHA256)
+      base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
+      base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz.SHA256)
+      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
+      base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz.SHA256)
 
       # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
