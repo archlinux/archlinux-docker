@@ -46,7 +46,6 @@ rootfs:
   extends: .rootfs
   except:
     - master
-    - add-base-devel-tags
     - schedules
     - tags
   parallel:
@@ -61,7 +60,6 @@ rootfs:secure:
     - secure
   only:
     - master
-    - add-base-devel-tags
     - schedules
   except:
     - tags
@@ -87,7 +85,6 @@ image:build:
   extends: .image
   except:
     - master
-    - add-base-devel-tags
     - schedules
     - tags
   parallel:
@@ -102,7 +99,6 @@ image:build:secure:
     - secure
   only:
     - master
-    - add-base-devel-tags
     - schedules
   except:
     - tags
@@ -189,7 +185,7 @@ release:
     - >
       curl -sSf --request POST
       --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
-      --form "branch=add-base-devel-tags"
+      --form "branch=master"
       --form "commit_message=Release ${BUILD_VERSION}"
       --form "actions[][action]=update"
       --form "actions[][file_path]=ci/base/Dockerfile"
@@ -212,7 +208,7 @@ release:
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       echo "Creating release"
       release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}" \
-      --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags" \
+      --tag-name v${BUILD_VERSION} --ref "master" \
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_url}\"}" \
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_sha_url}\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_devel_url}\"}" \
