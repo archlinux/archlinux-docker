@@ -175,11 +175,12 @@ upload_and_commit_rootfs:
     - |
       for group in base base-devel; do
         sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
-        sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
-        sed -i "s|TEMPLATE_ROOTFS_URL|${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz|" ci/${group}/Dockerfile
-        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" ci/${group}/Dockerfile
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
         curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
+        sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
+        package_url=$(ci/get-public-download-for-generic-package.sh ${group}-$(BUILD_VERSION).tar.xz)
+        sed -i "s|TEMPLATE_ROOTFS_URL|${package_url}|" ci/${group}/Dockerfile
+        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" ci/${group}/Dockerfile
       done
     - >
       curl --request POST
@@ -208,20 +209,19 @@ release:
     - apk add jq curl
   script:
     - |
-      package_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages" | jq ".[] | select(.version == \"${BUILD_VERSION}\") | .id")
-      base_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-${BUILD_VERSION}.tar.xz\") | .id")
-      base_sha_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-${BUILD_VERSION}.tar.xz.SHA256\") | .id")
-      base_devel_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-devel-${BUILD_VERSION}.tar.xz\") | .id")
-      base_devel_sha_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-devel-${BUILD_VERSION}.tar.xz.SHA256\") | .id")
+      base_url=$(ci/get-public-download-for-generic-package.sh base-$(BUILD_VERSION).tar.xz)
+      base_sha_url=$(ci/get-public-download-for-generic-package.sh base-$(BUILD_VERSION).tar.xz.SHA256)
+      base_devel_url=$(ci/get-public-download-for-generic-package.sh base-$(BUILD_VERSION).tar.xz)
+      base_devel_sha_url=$(ci/get-public-download-for-generic-package.sh base-devel-$(BUILD_VERSION).tar.xz.SHA256)
 
       # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}" \
       --tag-name v${BUILD_VERSION} --ref "add-base-devel-tags" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_id}/download\"}" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_sha_id}/download\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_devel_id}/download\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/${base_devel_sha_id}/download\"}"
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_url}\"}" \
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_sha_url}\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_devel_url}\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_devel_sha_url}\"}"
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 publish:
