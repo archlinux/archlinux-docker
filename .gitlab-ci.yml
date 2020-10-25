@@ -209,10 +209,10 @@ release:
   script:
     - |
       package_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages" | jq ".[] | select(.version == \"${BUILD_VERSION}\") | .id")
-      base_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${pacakge_id}/package_files" | jq ".[] | select(.file_name == \"base-${BUILD_VERSION}.tar.xz\") | .id")
-      base_sha_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${pacakge_id}/package_files" | jq ".[] | select(.file_name == \"base-${BUILD_VERSION}.tar.xz.SHA256\") | .id")
-      base_devel_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${pacakge_id}/package_files" | jq ".[] | select(.file_name == \"base-devel-${BUILD_VERSION}.tar.xz\") | .id")
-      base_devel_sha_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${pacakge_id}/package_files" | jq ".[] | select(.file_name == \"base-devel-${BUILD_VERSION}.tar.xz.SHA256\") | .id")
+      base_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-${BUILD_VERSION}.tar.xz\") | .id")
+      base_sha_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-${BUILD_VERSION}.tar.xz.SHA256\") | .id")
+      base_devel_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-devel-${BUILD_VERSION}.tar.xz\") | .id")
+      base_devel_sha_id=$(curl --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${package_id}/package_files" | jq ".[] | select(.file_name == \"base-devel-${BUILD_VERSION}.tar.xz.SHA256\") | .id")
 
       # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
