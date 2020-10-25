@@ -11,7 +11,7 @@
 FROM archlinux:latest AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 SHELL ["/bin/bash", "-c"]
-RUN ROOTFS="$(curl -OJL -w "%{filename_effective}" TEMPLATE_ROOTFS_URL)" && \
+RUN ROOTFS="$(curl -OJL --continue-at - -w "%{filename_effective}" TEMPLATE_ROOTFS_URL)" && \
     sha256sum -c <<< "TEMPLATE_ROOTFS_HASH" && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
