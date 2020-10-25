@@ -1,52 +1,57 @@
-DOCKER_USER:=pierres
-DOCKER_ORGANIZATION=archlinux
-DOCKER_IMAGE:=base
-BUILDDIR=build
-PWD=$(shell pwd)
+BUILDDIR=$(shell pwd)/build
+OUTPUTDIR=$(shell pwd)/output
 
-XZ_THREADS ?= 0
+define rootfs
+	mkdir -vp $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks
+	find /usr/share/libalpm/hooks -exec ln -sf /dev/null $(BUILDDIR)/alpm-hooks{} \;
 
-hooks:
-	mkdir -p alpm-hooks/usr/share/libalpm/hooks
-	find /usr/share/libalpm/hooks -exec ln -sf /dev/null $(PWD)/alpm-hooks{} \;
-
-rootfs: hooks
-	mkdir -vp $(BUILDDIR)/var/lib/pacman/
-	cp /usr/share/devtools/pacman-extra.conf rootfs/etc/pacman.conf
-	cat pacman-conf.d-noextract.conf >> rootfs/etc/pacman.conf
+	mkdir -vp $(BUILDDIR)/var/lib/pacman/ $(OUTPUTDIR)
+	install -Dm644 /usr/share/devtools/pacman-extra.conf $(BUILDDIR)/etc/pacman.conf
+	cat pacman-conf.d-noextract.conf >> $(BUILDDIR)/etc/pacman.conf
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
-		--noconfirm --dbpath $(PWD)/$(BUILDDIR)/var/lib/pacman \
-		--config rootfs/etc/pacman.conf \
+		--noconfirm --dbpath $(BUILDDIR)/var/lib/pacman \
+		--config $(BUILDDIR)/etc/pacman.conf \
 		--noscriptlet \
-		--hookdir $(PWD)/alpm-hooks/usr/share/libalpm/hooks/ $(shell cat packages)
+		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
-	
+
 	# remove passwordless login for root (see CVE-2019-5021 for reference)
 	sed -i -e 's/^root::/root:!:/' "$(BUILDDIR)/etc/shadow"
 
 	# fakeroot to map the gid/uid of the builder process to root
 	# fixes #22
-	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f archlinux.tar
-	rm -rf $(BUILDDIR) alpm-hooks
+	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f $(OUTPUTDIR)/$(1).tar
 
-archlinux.tar: rootfs
+	cd $(OUTPUTDIR); xz -9 -T0 -f $(1).tar; sha256sum $(1).tar.xz > $(1).tar.xz.SHA256
+endef
 
-compress-rootfs: archlinux.tar
-	xz -9 -T"$(XZ_THREADS)" -f archlinux.tar
+define dockerfile
+	sed -e "s|TEMPLATE_ROOTFS_FILE|$(1).tar.xz|" \
+	    -e "s|TEMPLATE_ROOTFS_URL|file:///$(1).tar.xz|" \
+	    -e "s|TEMPLATE_ROOTFS_HASH|$$(cat $(OUTPUTDIR)/$(1).tar.xz.SHA256)|" \
+	    Dockerfile.template > $(OUTPUTDIR)/Dockerfile.$(1)
+endef
 
-docker-image: compress-rootfs
-	docker build -t $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) .
+.PHONY: clean
+clean:
+	rm -rf $(BUILDDIR) $(OUTPUTDIR)
 
-docker-image-test: docker-image
-	# FIXME: /etc/mtab is hidden by docker so the stricter -Qkk fails
-	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Sy && /usr/bin/pacman -Qqk"
-	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm docker && docker -v" # Ensure that the image does not include a private key
-	! docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) pacman-key --lsign-key pierre@archlinux.de
-	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/id -u http"
-	docker run --rm $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE) sh -c "/usr/bin/pacman -Syu --noconfirm grep && locale | grep -q UTF-8"
+$(OUTPUTDIR)/base.tar.xz:
+	$(call rootfs,base,base)
 
-docker-push:
-	docker login -u $(DOCKER_USER)
-	docker push $(DOCKER_ORGANIZATION)/$(DOCKER_IMAGE)
+$(OUTPUTDIR)/base-devel.tar.xz:
+	$(call rootfs,base-devel,base base-devel)
 
-.PHONY: rootfs docker-image docker-image-test docker-push
+$(OUTPUTDIR)/Dockerfile.base:
+	$(call dockerfile,base)
+
+$(OUTPUTDIR)/Dockerfile.base-devel:
+	$(call dockerfile,base-devel)
+
+.PHONY: docker-image-base
+image-base: $(OUTPUTDIR)/base.tar.xz $(OUTPUTDIR)/Dockerfile.base
+	docker build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
+
+.PHONY: docker-image-base-devel
+image-base-devel: $(OUTPUTDIR)/base-devel.tar.xz $(OUTPUTDIR)/Dockerfile.base-devel
+	docker build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
