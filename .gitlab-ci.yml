@@ -122,8 +122,8 @@ image:publish:secure:
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
-      --context $CI_PROJECT_DIR/ci/$GROUP
-      --dockerfile $CI_PROJECT_DIR/ci/$GROUP/Dockerfile
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
       --destination archlinux/archlinux:$GROUP-$BUILD_VERSION
 
 .test:
@@ -177,6 +177,7 @@ release:
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
         echo "Uploading ${group}.tar.xz.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
+        mkdir ci/${group}
         sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
         package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.xz)
         sed -i "s|TEMPLATE_ROOTFS_URL|${package_url}|" ci/${group}/Dockerfile
@@ -185,13 +186,13 @@ release:
     - >
       curl -sSf --request POST
       --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
-      --form "branch=master"
+      --form "branch=releases"
       --form "commit_message=Release ${BUILD_VERSION}"
       --form "actions[][action]=update"
-      --form "actions[][file_path]=ci/base/Dockerfile"
+      --form "actions[][file_path]=Dockerfile.base"
       --form "actions[][content]=<ci/base/Dockerfile"
       --form "actions[][action]=update"
-      --form "actions[][file_path]=ci/base-devel/Dockerfile"
+      --form "actions[][file_path]=Dockerfile.base-devel"
       --form "actions[][content]=<ci/base-devel/Dockerfile"
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
     - |
@@ -208,7 +209,7 @@ release:
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       echo "Creating release"
       release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}" \
-      --tag-name v${BUILD_VERSION} --ref "master" \
+      --tag-name v${BUILD_VERSION} --ref "releases" \
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_url}\"}" \
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_sha_url}\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_devel_url}\"}" \
