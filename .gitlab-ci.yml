@@ -15,6 +15,8 @@ lint:
   image: hadolint/hadolint:latest
   # DL3007: We use the latest tag for multistage build
   script: hadolint --ignore DL3007 --ignore DL3020 Dockerfile.template
+  except:
+    - releases
 
 get_version:
   stage: .pre
