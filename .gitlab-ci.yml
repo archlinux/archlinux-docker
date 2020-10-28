@@ -48,6 +48,7 @@ rootfs:
   extends: .rootfs
   except:
     - master
+    - releases
     - schedules
     - tags
   parallel:
@@ -65,6 +66,7 @@ rootfs:secure:
     - schedules
   except:
     - tags
+    - releases
   parallel:
     matrix:
       - GROUP: [base, base-devel]
@@ -87,6 +89,7 @@ image:build:
   extends: .image
   except:
     - master
+    - releases
     - schedules
     - tags
   parallel:
@@ -138,6 +141,7 @@ image:publish:secure:
       - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
   except:
     refs:
+      - releases
       - tags
   script:
     - pacman -Sy
