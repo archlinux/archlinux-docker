@@ -177,11 +177,10 @@ release:
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
         echo "Uploading ${group}.tar.xz.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
-        mkdir ci/${group}
-        sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > ci/${group}/Dockerfile
+        sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > output/Dockerfile.${group}
         package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.xz)
-        sed -i "s|TEMPLATE_ROOTFS_URL|${package_url}|" ci/${group}/Dockerfile
-        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" ci/${group}/Dockerfile
+        sed -i "s|TEMPLATE_ROOTFS_URL|${package_url}|" output/Dockerfile.${group}
+        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" output/Dockerfile.${group}
       done
     - >
       curl -sSf --request POST
@@ -190,10 +189,13 @@ release:
       --form "commit_message=Release ${BUILD_VERSION}"
       --form "actions[][action]=update"
       --form "actions[][file_path]=Dockerfile.base"
-      --form "actions[][content]=<ci/base/Dockerfile"
+      --form "actions[][content]=<output/Dockerfile.base"
       --form "actions[][action]=update"
       --form "actions[][file_path]=Dockerfile.base-devel"
-      --form "actions[][content]=<ci/base-devel/Dockerfile"
+      --form "actions[][content]=<output/Dockerfile.base-devel"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=.gitlab-ci.yml"
+      --form "actions[][content]=<.gitlab-ci.yml"
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
     - |
       base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
