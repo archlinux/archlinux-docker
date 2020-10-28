@@ -1,0 +1,241 @@
+default:
+  image: "archlinux:latest"
+
+stages:
+  - lint
+  - rootfs
+  - image
+  - test
+  - upload
+  - release
+  - publish
+
+lint:
+  stage: lint
+  image: hadolint/hadolint:latest
+  # DL3007: We use the latest tag for multistage build
+  script: hadolint --ignore DL3007 --ignore DL3020 Dockerfile.template
+
+get_version:
+  stage: .pre
+  script:
+    - |
+      # If we're building a tagged release, use the tag (without the 'v' prefix) as the
+      # BUILD_VERSION. Otherwise, determine a new BUILD_VERSION.
+      if [[ -n "$CI_COMMIT_TAG" ]]; then
+        echo "BUILD_VERSION=${CI_COMMIT_TAG/v/}" > build.env
+      else
+        echo "BUILD_VERSION=$(date +%Y%m%d).0.$CI_JOB_ID" > build.env
+      fi
+    - export $(< build.env)
+    - echo "PACKAGE_REGISTRY_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/rootfs/${BUILD_VERSION}" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+.rootfs:
+  stage: rootfs
+  before_script:
+    - pacman -Syu --noconfirm make devtools fakechroot fakeroot
+  artifacts:
+    paths:
+      - output/*
+    expire_in: 2h
+
+rootfs:
+  extends: .rootfs
+  except:
+    - master
+    - schedules
+    - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
+  script:
+    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
+
+rootfs:secure:
+  extends: .rootfs
+  tags:
+    - secure
+  only:
+    - master
+    - schedules
+  except:
+    - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
+  script:
+    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
+
+.image:
+  stage: image
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR/output
+      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.$GROUP
+      --destination $CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG
+
+image:build:
+  extends: .image
+  except:
+    - master
+    - schedules
+    - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
+  before_script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+
+image:build:secure:
+  extends: .image
+  tags:
+    - secure
+  only:
+    - master
+    - schedules
+  except:
+    - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
+  before_script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
+
+image:publish:secure:
+  extends: .image
+  tags:
+    - secure
+  only:
+    - tags
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
+  before_script:
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+  script:
+    - /kaniko/executor
+      --whitelist-var-run="false"
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
+      --destination archlinux/archlinux:$GROUP-$BUILD_VERSION
+
+.test:
+  stage: test
+  dependencies: []
+  only:
+    variables:
+      # Workaround for https://gitlab.com/gitlab-org/gitlab/-/issues/259663
+      # This is fine as at this point we're sure that the release works anyway.
+      - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
+  except:
+    refs:
+      - tags
+  script:
+    - pacman -Sy
+    - pacman -Qqk
+    - pacman -Syu --noconfirm docker grep
+    - docker -v
+    - id -u http
+    - locale | grep -q UTF-8
+
+test:base:
+  extends: .test
+  image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+
+test:base-devel:
+  extends: .test
+  image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
+  after_script:
+    - gcc -v
+    - g++ -v
+    - make -v
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  tags:
+    - secure
+  only:
+    refs:
+      - schedules
+    variables:
+      - $SCHEDULED_PUBLISH == "TRUE"
+  before_script:
+    - apk add jq curl
+  script:
+    - |
+      for group in base base-devel; do
+        sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
+        echo "Uploading ${group}.tar.xz"
+        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
+        echo "Uploading ${group}.tar.xz.SHA256"
+        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
+        sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > output/Dockerfile.${group}
+        package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.xz)
+        sed -i "s|TEMPLATE_ROOTFS_URL|${package_url}|" output/Dockerfile.${group}
+        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" output/Dockerfile.${group}
+      done
+    - >
+      curl -sSf --request POST
+      --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
+      --form "branch=releases"
+      --form "commit_message=Release ${BUILD_VERSION}"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=Dockerfile.base"
+      --form "actions[][content]=<output/Dockerfile.base"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=Dockerfile.base-devel"
+      --form "actions[][content]=<output/Dockerfile.base-devel"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=.gitlab-ci.yml"
+      --form "actions[][content]=<.gitlab-ci.yml"
+      "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
+    - |
+      base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
+      echo "${base_url}"
+      base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz.SHA256)
+      echo "${base_sha_url}"
+      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz)
+      echo "${base_devel_url}"
+      base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz.SHA256)
+      echo "${base_devel_sha_url}"
+
+      # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
+      # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
+      echo "Creating release"
+      release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}" \
+      --tag-name v${BUILD_VERSION} --ref "releases" \
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_url}\"}" \
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_sha_url}\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_devel_url}\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_devel_sha_url}\"}"
+
+# Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
+publish:
+  stage: publish
+  tags:
+    - secure
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: none
+  only:
+    - tags
+  before_script:
+    - echo $DOCKER_ACCESS_TOKEN | crane auth login -u $DOCKER_USERNAME --password-stdin index.docker.io
+  script:
+    - crane tag archlinux/archlinux:base-$BUILD_VERSION base
+    - crane tag archlinux/archlinux:base-$BUILD_VERSION latest
+    - crane tag archlinux/archlinux:base-devel-$BUILD_VERSION base-devel
+
+# Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
+# publish:official:
+# TODO No idea right now how we're going to automatically do the official Docker Hub pull request
