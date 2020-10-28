@@ -17,6 +17,7 @@ lint:
   script: hadolint --ignore DL3007 --ignore DL3020 Dockerfile.template
   except:
     - releases
+    - tags
 
 get_version:
   stage: .pre
