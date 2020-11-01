@@ -177,9 +177,14 @@ release:
       - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
   before_script:
     - apk update
-    - apk add jq curl
+    - apk add jq curl httpie
   script:
     - |
+      # Update the description on https://hub.docker.com/r/archlinux/archlinux
+      TOKEN="$(https POST https://hub.docker.com/v2/users/login username="${DOCKERHUB_USERNAME}" password="${DOCKERHUB_PASSWORD}" | jq -er .token)"
+      https PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ Authorization:"JWT ${TOKEN}" full_description="$(cat README.md)"
+
+      # Upload rootfs to the Generic Packages Repository
       for group in base base-devel; do
         sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
         echo "Uploading ${group}.tar.xz"
