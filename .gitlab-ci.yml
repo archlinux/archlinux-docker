@@ -116,6 +116,7 @@ image:build:secure:
 
 image:publish:secure:
   extends: .image
+  retry: 2
   tags:
     - secure
   only:
@@ -134,6 +135,7 @@ image:publish:secure:
 
 .test:
   stage: test
+  retry: 2
   dependencies: []
   only:
     variables:
