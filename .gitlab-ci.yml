@@ -177,14 +177,12 @@ release:
       - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
   before_script:
     - apk update
-    - apk add jq curl
+    - apk add jq curl httpie
   script:
     - |
       # Update the description on https://hub.docker.com/r/archlinux/archlinux
-      JSON="$(jq -n --arg user "${DOCKERHUB_USERNAME}" --arg pw "${DOCKERHUB_PASSWORD}" '{"username": $user, "password": $pw}')"
-      TOKEN="$(curl -sf -H "Content-Type: application/json" --data "${JSON}" "https://hub.docker.com/v2/users/login" | jq -er .token)"
-      JSON="$(jq -n --arg full_description "$(cat README.md)" '{"full_description": $full_description}')"
-      curl -sf -H "Content-Type: application/json" -H "Authorization: JWT ${TOKEN}" --request PATCH --data "${JSON}" "https://hub.docker.com/v2/repositories/archlinux/archlinux/"
+      TOKEN="$(https POST https://hub.docker.com/v2/users/login username="${DOCKERHUB_USERNAME}" password="${DOCKERHUB_PASSWORD}" | jq -er .token)"
+      https PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ Authorization:"JWT ${TOKEN}" full_description="$(cat README.md)"
 
       # Upload rootfs to the Generic Packages Repository
       for group in base base-devel; do
