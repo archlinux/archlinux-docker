@@ -125,7 +125,7 @@ image:publish:secure:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
-    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKERHUB_USERNAME\",\"password\":\"$DOCKERHUB_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --whitelist-var-run="false"
@@ -244,7 +244,7 @@ publish:
   only:
     - tags
   before_script:
-    - echo $DOCKER_ACCESS_TOKEN | crane auth login -u $DOCKER_USERNAME --password-stdin index.docker.io
+    - echo $DOCKERHUB_ACCESS_TOKEN | crane auth login -u $DOCKERHUB_USERNAME --password-stdin index.docker.io
   script:
     - crane tag archlinux/archlinux:base-$BUILD_VERSION base
     - crane tag archlinux/archlinux:base-$BUILD_VERSION latest
