@@ -180,6 +180,13 @@ release:
     - apk add jq curl
   script:
     - |
+      # Update the description on https://hub.docker.com/r/archlinux/archlinux
+      JSON="$(jq -n --arg user "${DOCKERHUB_USERNAME}" --arg pw "${DOCKERHUB_PASSWORD}" '{"username": $user, "password": $pw}')"
+      TOKEN="$(curl -sf -H "Content-Type: application/json" --data "${JSON}" "https://hub.docker.com/v2/users/login" | jq -er .token)"
+      JSON="$(jq -n --arg full_description "$(cat README.md)" '{"full_description": $full_description}')"
+      curl -sf -H "Content-Type: application/json" -H "Authorization: JWT ${TOKEN}" --request PATCH --data "${JSON}" "https://hub.docker.com/v2/repositories/archlinux/archlinux/"
+
+      # Upload rootfs to the Generic Packages Repository
       for group in base base-devel; do
         sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
         echo "Uploading ${group}.tar.xz"
