@@ -135,7 +135,6 @@ image:publish:secure:
 
 .test:
   stage: test
-  retry: 2
   dependencies: []
   only:
     variables:
@@ -234,6 +233,7 @@ release:
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 publish:
   stage: publish
+  retry: 2
   tags:
     - secure
   image:
