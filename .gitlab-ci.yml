@@ -173,8 +173,6 @@ release:
   only:
     refs:
       - schedules
-    variables:
-      - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
   before_script:
     - apk update
     - apk add jq curl httpie
