@@ -173,7 +173,7 @@ release:
     refs:
       - schedules
     variables:
-      - $SCHEDULED_PUBLISH == "TRUE"
+      - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
   before_script:
     - apk update
     - apk add jq curl
@@ -255,7 +255,7 @@ publish:official:
     refs:
       - schedules
     variables:
-      - $SCHEDULED_PUBLISH == "TRUE"
+      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - export | grep -q BUILD_VERSION=
     - export | grep -q BUILD_COMMIT=
