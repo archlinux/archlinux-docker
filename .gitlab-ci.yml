@@ -175,6 +175,7 @@ release:
     variables:
       - $SCHEDULED_PUBLISH == "TRUE"
   before_script:
+    - apk update
     - apk add jq curl
   script:
     - |
@@ -190,7 +191,7 @@ release:
         sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" output/Dockerfile.${group}
       done
     - >
-      curl -sSf --request POST
+      curl -sSf --request POST -o commit-response.json
       --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
       --form "branch=releases"
       --form "commit_message=Release ${BUILD_VERSION}"
@@ -204,6 +205,7 @@ release:
       --form "actions[][file_path]=.gitlab-ci.yml"
       --form "actions[][content]=<.gitlab-ci.yml"
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
+    - echo "BUILD_COMMIT=$(jq -r '.id' commit-response.json)" >> build.env
     - |
       base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
       echo "${base_url}"
@@ -223,6 +225,9 @@ release:
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_sha_url}\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_devel_url}\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_devel_sha_url}\"}"
+  artifacts:
+    reports:
+      dotenv: build.env
 
 # Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 publish:
@@ -244,5 +249,44 @@ publish:
     - crane tag archlinux/archlinux:base-devel-$BUILD_VERSION base-devel
 
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
-# publish:official:
-# TODO No idea right now how we're going to automatically do the official Docker Hub pull request
+publish:official:
+  stage: publish
+  only:
+    refs:
+      - schedules
+    variables:
+      - $SCHEDULED_PUBLISH == "TRUE"
+  before_script:
+    - export | grep -q BUILD_VERSION=
+    - export | grep -q BUILD_COMMIT=
+    - test -n "$BUILD_VERSION"
+    - test -n "$BUILD_COMMIT"
+    - test -n "$GITHUB_TOKEN"
+    - pacman -Syu --noconfirm github-cli git gettext
+    - git config --global user.email "github@archlinux.org"
+    - git config --global user.name "Arch Linux Technical User"
+  script:
+    - mkdir official-images
+    - cd official-images
+    - git init
+    - 'git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/archlinux/official-images.git"'
+    - git fetch --depth=1 https://github.com/docker-library/official-images.git
+    - git reset --hard FETCH_HEAD
+    - head="release/${BUILD_VERSION}"
+    - git checkout -b "$head"
+    - envsubst < ../docker-library.template > library/archlinux
+    - git diff
+    - git add library/archlinux
+    - maintainers="$(grep \(@ ../docker-library.template | cut -d\( -f2 | cut -d\) -f1 | xargs)"
+    - test -n "$maintainers"
+    - 'git commit
+        -m "archlinux: Release ${BUILD_VERSION}"
+        -m "This is an automated release [1]."
+        -m "Maintainers: ${maintainers}"
+        -m "[1] ${CI_PROJECT_URL}/-/blob/master/.gitlab-ci.yml"'
+    - git push -u origin "$head"
+    - gh pr create
+        --repo docker-library/official-images
+        --fill
+        --base master
+        --head archlinux:"$head"
