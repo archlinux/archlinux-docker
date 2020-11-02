@@ -114,6 +114,7 @@ image:build:secure:
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
 
+# Build and publish to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 image:publish:secure:
   extends: .image
   retry: 2
@@ -127,11 +128,16 @@ image:publish:secure:
   before_script:
     - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKERHUB_USERNAME\",\"password\":\"$DOCKERHUB_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
+    - DESTS="--destination archlinux/archlinux:$GROUP
+             --destination archlinux/archlinux:$GROUP-$BUILD_VERSION"
+    - if [[ "$GROUP" == "base" ]]; then
+        DESTS="$DESTS --destination archlinux/archlinux:latest"
+      fi
     - /kaniko/executor
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
-      --destination archlinux/archlinux:$GROUP-$BUILD_VERSION
+      $DESTS
 
 .test:
   stage: test
@@ -236,28 +242,8 @@ release:
     reports:
       dotenv: build.env
 
-# Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
-publish:
-  stage: publish
-  retry: 2
-  tags:
-    - secure
-  image:
-    name: gcr.io/go-containerregistry/crane:debug
-    entrypoint: [""]
-  variables:
-    GIT_STRATEGY: none
-  only:
-    - tags
-  before_script:
-    - echo $DOCKERHUB_ACCESS_TOKEN | crane auth login -u $DOCKERHUB_USERNAME --password-stdin index.docker.io
-  script:
-    - crane tag archlinux/archlinux:base-$BUILD_VERSION base
-    - crane tag archlinux/archlinux:base-$BUILD_VERSION latest
-    - crane tag archlinux/archlinux:base-devel-$BUILD_VERSION base-devel
-
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
-publish:official:
+publish:
   stage: publish
   only:
     refs:
