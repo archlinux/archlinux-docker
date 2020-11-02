@@ -8,12 +8,13 @@
 # The second stage is for actually configuring the system a little bit.
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the releaes process.
-FROM archlinux:latest AS verify
+FROM alpine:3.12 AS verify
+RUN apk add --no-cache curl bash
 SHELL ["/bin/bash", "-c"]
-RUN ROOTFS="$(curl -OJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/115/download)" && \
-    sha256sum -c <<< "49c7e637fc49c1a1dd90a4718cccf2c51e20e3cd5f45ac3d45fe3d67ccdce00c  base-devel-20201102.0.8190.tar.xz" && \
+RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/119/download)" && \
+    sha256sum -c <<< "e6b8e112de2c95fd0c52c39cd5b6b515af1073ee71feb04009b30639da64cefb  base-devel-20201102.0.8261.tar.xz" && \
     mkdir /rootfs && \
-    tar -C /rootfs --extract --auto-compress --file "${ROOTFS}"
+    tar -C /rootfs --extract --file "${ROOTFS}"
 
 FROM scratch AS root
 COPY --from=verify /rootfs/ /
