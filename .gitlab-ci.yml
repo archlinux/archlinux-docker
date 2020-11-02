@@ -264,7 +264,7 @@ publish:
     - cd official-images
     - git init
     - 'git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/archlinux/official-images.git"'
-    - git fetch --depth=1 https://github.com/docker-library/official-images.git
+    - git fetch https://github.com/docker-library/official-images.git
     - git reset --hard FETCH_HEAD
     - head="release/${BUILD_VERSION}"
     - git checkout -b "$head"
