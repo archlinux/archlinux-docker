@@ -12,9 +12,8 @@ stages:
 lint:
   stage: lint
   image: hadolint/hadolint:latest
-  # DL3007: We use the latest tag for multistage build
   # DL3018: We don't need alpine version pins
-  script: hadolint --ignore DL3007 --ignore DL3018 --ignore DL3020 Dockerfile.template
+  script: hadolint --ignore DL3018 --ignore DL3020 Dockerfile.template
   except:
     - releases
     - tags
