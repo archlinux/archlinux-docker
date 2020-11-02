@@ -6,7 +6,6 @@ stages:
   - rootfs
   - image
   - test
-  - upload
   - release
   - publish
 
@@ -114,8 +113,10 @@ image:build:secure:
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
 
+# Build and publish to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
 image:publish:secure:
   extends: .image
+  retry: 2
   tags:
     - secure
   only:
@@ -124,13 +125,19 @@ image:publish:secure:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
-    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKER_USERNAME\",\"password\":\"$DOCKER_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKERHUB_USERNAME\",\"password\":\"$DOCKERHUB_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
   script:
+    - LATEST=""
+    - if [[ "$GROUP" == "base" ]]; then
+        LATEST="--destination archlinux/archlinux:latest"
+      fi
     - /kaniko/executor
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
+      --destination archlinux/archlinux:$GROUP
       --destination archlinux/archlinux:$GROUP-$BUILD_VERSION
+      $LATEST
 
 .test:
   stage: test
@@ -174,11 +181,17 @@ release:
       - schedules
     variables:
       - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
+      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - apk update
-    - apk add jq curl
+    - apk add jq curl httpie
   script:
     - |
+      # Update the description on https://hub.docker.com/r/archlinux/archlinux
+      TOKEN="$(http --ignore-stdin POST https://hub.docker.com/v2/users/login username="${DOCKERHUB_USERNAME}" password="${DOCKERHUB_PASSWORD}" | jq -er .token)"
+      http --ignore-stdin PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ Authorization:"JWT ${TOKEN}" full_description="$(cat README.md)"
+
+      # Upload rootfs to the Generic Packages Repository
       for group in base base-devel; do
         sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
         echo "Uploading ${group}.tar.xz"
@@ -229,27 +242,8 @@ release:
     reports:
       dotenv: build.env
 
-# Publish base to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
-publish:
-  stage: publish
-  tags:
-    - secure
-  image:
-    name: gcr.io/go-containerregistry/crane:debug
-    entrypoint: [""]
-  variables:
-    GIT_STRATEGY: none
-  only:
-    - tags
-  before_script:
-    - echo $DOCKER_ACCESS_TOKEN | crane auth login -u $DOCKER_USERNAME --password-stdin index.docker.io
-  script:
-    - crane tag archlinux/archlinux:base-$BUILD_VERSION base
-    - crane tag archlinux/archlinux:base-$BUILD_VERSION latest
-    - crane tag archlinux/archlinux:base-devel-$BUILD_VERSION base-devel
-
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
-publish:official:
+publish:
   stage: publish
   only:
     refs:
