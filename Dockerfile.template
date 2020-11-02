@@ -10,7 +10,7 @@
 # allow us to automate the releaes process.
 FROM alpine:3.12 AS verify
 COPY TEMPLATE_ROOTFS_FILE /
-RUN apk update && apk add --no-cache curl=7.69.1-r1 bash=5.0.17-r0
+RUN apk update && apk add --no-cache curl bash
 SHELL ["/bin/bash", "-c"]
 RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" TEMPLATE_ROOTFS_URL)" && \
     sha256sum -c <<< "TEMPLATE_ROOTFS_HASH" && \
