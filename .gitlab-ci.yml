@@ -129,7 +129,7 @@ image:publish:secure:
   script:
     - LATEST=""
     - if [[ "$GROUP" == "base" ]]; then
-        LATEST="--destination archlinux/archlinux:latest"
+        LATEST="--destination archlinux/archlinux:latest";
       fi
     - /kaniko/executor
       --whitelist-var-run="false"
