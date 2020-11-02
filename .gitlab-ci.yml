@@ -6,7 +6,6 @@ stages:
   - rootfs
   - image
   - test
-  - upload
   - release
   - publish
 
