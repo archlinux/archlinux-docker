@@ -149,22 +149,26 @@ image:publish:secure:
     refs:
       - releases
       - tags
-  script:
-    - pacman -Sy
-    - pacman -Qqk
-    - pacman -Syu --noconfirm docker grep
-    - docker -v
-    - id -u http
-    - locale | grep -q UTF-8
+
+.test-script: &test-script
+  - pacman -Sy
+  - pacman -Qqk
+  - pacman -Syu --noconfirm docker grep
+  - docker -v
+  - id -u http
+  - locale | grep -q UTF-8
 
 test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+  script:
+    - *test-script
 
 test:base-devel:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-  after_script:
+  script:
+    - *test-script
     - gcc -v
     - g++ -v
     - make -v
