@@ -14,7 +14,6 @@ define rootfs
 		--config $(BUILDDIR)/etc/pacman.conf \
 		--noscriptlet \
 		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
-	fakechroot -- fakeroot -- chroot $(BUILDDIR) ldconfig
 	fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
 	fakechroot -- fakeroot -- chroot $(BUILDDIR) locale-gen
 	fakechroot -- fakeroot -- chroot $(BUILDDIR) sh -c 'ls usr/lib/sysusers.d/*.conf | /usr/share/libalpm/scripts/systemd-hook sysusers'

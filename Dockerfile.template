@@ -20,5 +20,7 @@ RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" TEMPLATE_ROO
 FROM scratch AS root
 COPY --from=verify /rootfs/ /
 
+RUN ldconfig
+
 ENV LANG=en_US.UTF-8
 CMD ["/usr/bin/bash"]
