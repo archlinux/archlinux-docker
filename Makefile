@@ -8,11 +8,20 @@ define rootfs
 	mkdir -vp $(BUILDDIR)/var/lib/pacman/ $(OUTPUTDIR)
 	install -Dm644 /usr/share/devtools/pacman-extra.conf $(BUILDDIR)/etc/pacman.conf
 	cat pacman-conf.d-noextract.conf >> $(BUILDDIR)/etc/pacman.conf
+
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
 		--noconfirm --dbpath $(BUILDDIR)/var/lib/pacman \
 		--config $(BUILDDIR)/etc/pacman.conf \
 		--noscriptlet \
 		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) ldconfig
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) locale-gen
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) sh -c 'ls usr/lib/sysusers.d/*.conf | /usr/share/libalpm/scripts/systemd-hook sysusers'
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) sh -c 'pacman-key --init && pacman-key --populate archlinux && bash -c "rm -rf etc/pacman.d/gnupg/{openpgp-revocs.d/,private-keys-v1.d/,pubring.gpg~,gnupg.S.}*"'
+
+	ln -fs /usr/lib/os-release $(BUILDDIR)/etc/os-release
+
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
 
 	# remove passwordless login for root (see CVE-2019-5021 for reference)
