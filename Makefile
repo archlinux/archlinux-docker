@@ -51,16 +51,16 @@ $(OUTPUTDIR)/base.tar.xz:
 $(OUTPUTDIR)/base-devel.tar.xz:
 	$(call rootfs,base-devel,base base-devel)
 
-$(OUTPUTDIR)/Dockerfile.base:
+$(OUTPUTDIR)/Dockerfile.base: $(OUTPUTDIR)/base.tar.xz
 	$(call dockerfile,base)
 
-$(OUTPUTDIR)/Dockerfile.base-devel:
+$(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.xz
 	$(call dockerfile,base-devel)
 
 .PHONY: docker-image-base
-image-base: $(OUTPUTDIR)/base.tar.xz $(OUTPUTDIR)/Dockerfile.base
+image-base: $(OUTPUTDIR)/Dockerfile.base
 	docker build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
 
 .PHONY: docker-image-base-devel
-image-base-devel: $(OUTPUTDIR)/base-devel.tar.xz $(OUTPUTDIR)/Dockerfile.base-devel
+image-base-devel: $(OUTPUTDIR)/Dockerfile.base-devel
 	docker build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
