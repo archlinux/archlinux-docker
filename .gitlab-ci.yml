@@ -39,6 +39,8 @@ get_version:
   stage: rootfs
   before_script:
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
+  script:
+    - make $PWD/output/Dockerfile.$GROUP
   artifacts:
     paths:
       - output/*
@@ -54,8 +56,6 @@ rootfs:
   parallel:
     matrix:
       - GROUP: [base, base-devel]
-  script:
-    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
 
 rootfs:secure:
   extends: .rootfs
@@ -70,8 +70,6 @@ rootfs:secure:
   parallel:
     matrix:
       - GROUP: [base, base-devel]
-  script:
-    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
 
 .image:
   stage: image
