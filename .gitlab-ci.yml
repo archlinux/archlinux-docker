@@ -39,6 +39,8 @@ get_version:
   stage: rootfs
   before_script:
     - pacman -Syu --noconfirm make devtools fakechroot fakeroot
+  script:
+    - make $PWD/output/Dockerfile.$GROUP
   artifacts:
     paths:
       - output/*
@@ -54,8 +56,6 @@ rootfs:
   parallel:
     matrix:
       - GROUP: [base, base-devel]
-  script:
-    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
 
 rootfs:secure:
   extends: .rootfs
@@ -70,8 +70,6 @@ rootfs:secure:
   parallel:
     matrix:
       - GROUP: [base, base-devel]
-  script:
-    - make $PWD/output/$GROUP.tar.xz $PWD/output/Dockerfile.$GROUP
 
 .image:
   stage: image
@@ -151,22 +149,26 @@ image:publish:secure:
     refs:
       - releases
       - tags
-  script:
-    - pacman -Sy
-    - pacman -Qqk
-    - pacman -Syu --noconfirm docker grep
-    - docker -v
-    - id -u http
-    - locale | grep -q UTF-8
+
+.test-script: &test-script
+  - pacman -Sy
+  - pacman -Qqk
+  - pacman -Syu --noconfirm docker grep
+  - docker -v
+  - id -u http
+  - locale | grep -q UTF-8
 
 test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
+  script:
+    - *test-script
 
 test:base-devel:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-devel-$CI_COMMIT_REF_SLUG
-  after_script:
+  script:
+    - *test-script
     - gcc -v
     - g++ -v
     - make -v

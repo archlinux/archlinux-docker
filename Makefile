@@ -8,12 +8,21 @@ define rootfs
 	mkdir -vp $(BUILDDIR)/var/lib/pacman/ $(OUTPUTDIR)
 	install -Dm644 /usr/share/devtools/pacman-extra.conf $(BUILDDIR)/etc/pacman.conf
 	cat pacman-conf.d-noextract.conf >> $(BUILDDIR)/etc/pacman.conf
+
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
 		--noconfirm --dbpath $(BUILDDIR)/var/lib/pacman \
 		--config $(BUILDDIR)/etc/pacman.conf \
 		--noscriptlet \
 		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
+
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
+
+fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) locale-gen
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) sh -c 'ls usr/lib/sysusers.d/*.conf | /usr/share/libalpm/scripts/systemd-hook sysusers'
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) sh -c 'pacman-key --init && pacman-key --populate archlinux && bash -c "rm -rf etc/pacman.d/gnupg/{openpgp-revocs.d/,private-keys-v1.d/,pubring.gpg~,gnupg.S.}*"'
+
+	ln -fs /usr/lib/os-release $(BUILDDIR)/etc/os-release
 
 	# remove passwordless login for root (see CVE-2019-5021 for reference)
 	sed -i -e 's/^root::/root:!:/' "$(BUILDDIR)/etc/shadow"
@@ -42,16 +51,16 @@ $(OUTPUTDIR)/base.tar.xz:
 $(OUTPUTDIR)/base-devel.tar.xz:
 	$(call rootfs,base-devel,base base-devel)
 
-$(OUTPUTDIR)/Dockerfile.base:
+$(OUTPUTDIR)/Dockerfile.base: $(OUTPUTDIR)/base.tar.xz
 	$(call dockerfile,base)
 
-$(OUTPUTDIR)/Dockerfile.base-devel:
+$(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.xz
 	$(call dockerfile,base-devel)
 
 .PHONY: docker-image-base
-image-base: $(OUTPUTDIR)/base.tar.xz $(OUTPUTDIR)/Dockerfile.base
+image-base: $(OUTPUTDIR)/Dockerfile.base
 	docker build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
 
 .PHONY: docker-image-base-devel
-image-base-devel: $(OUTPUTDIR)/base-devel.tar.xz $(OUTPUTDIR)/Dockerfile.base-devel
+image-base-devel: $(OUTPUTDIR)/Dockerfile.base-devel
 	docker build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
