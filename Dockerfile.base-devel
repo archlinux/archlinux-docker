@@ -11,23 +11,15 @@
 FROM alpine:3.12 AS verify
 RUN apk add --no-cache curl bash
 SHELL ["/bin/bash", "-c"]
-RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files//download)" && \
-    sha256sum -c <<< "70799aa132f66492e5c3645a6aff9ccb612f40b92c83f253d11fcb9f4bceca98  base-devel-20201113.0.8887.tar.xz" && \
+RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/179/download)" && \
+    sha256sum -c <<< "5fad138b5ac01936b79e5e0705b4e8abf26d116435bb00822e314f965b32dbc4  base-devel-20201114.0.8971.tar.xz" && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --file "${ROOTFS}"
 
 FROM scratch AS root
 COPY --from=verify /rootfs/ /
 
-# manually run all alpm hooks that can't be run inside the fakechroot
-RUN ldconfig && update-ca-trust && locale-gen
-RUN sh -c 'ls usr/lib/sysusers.d/*.conf | /usr/share/libalpm/scripts/systemd-hook sysusers '
-
-# update /etc/os-release
-RUN ln -s /usr/lib/os-release /etc/os-release
-
-# initialize the archlinux keyring, but discard any private key that may be shipped.
-RUN pacman-key --init && pacman-key --populate archlinux && bash -c "rm -rf etc/pacman.d/gnupg/{openpgp-revocs.d/,private-keys-v1.d/,pubring.gpg~,gnupg.S.}*"
+RUN ldconfig
 
 ENV LANG=en_US.UTF-8
 CMD ["/usr/bin/bash"]
