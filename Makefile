@@ -36,6 +36,7 @@ endef
 
 define dockerfile
 	sed -e "s|TEMPLATE_ROOTFS_FILE|$(1).tar.xz|" \
+	    -e "s|TEMPLATE_ROOTFS_RELEASE_URL|Local build|" \
 	    -e "s|TEMPLATE_ROOTFS_URL|file:///$(1).tar.xz|" \
 	    -e "s|TEMPLATE_ROOTFS_HASH|$$(cat $(OUTPUTDIR)/$(1).tar.xz.SHA256)|" \
 	    Dockerfile.template > $(OUTPUTDIR)/Dockerfile.$(1)

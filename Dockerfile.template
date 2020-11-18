@@ -12,6 +12,7 @@ FROM alpine:3.12 AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 RUN apk add --no-cache curl bash
 SHELL ["/bin/bash", "-c"]
+# TEMPLATE_ROOTFS_RELEASE_URL
 RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" TEMPLATE_ROOTFS_URL)" && \
     sha256sum -c <<< "TEMPLATE_ROOTFS_HASH" && \
     mkdir /rootfs && \
