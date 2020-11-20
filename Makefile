@@ -1,3 +1,4 @@
+DOCKER=docker
 BUILDDIR=$(shell pwd)/build
 OUTPUTDIR=$(shell pwd)/output
 
@@ -60,8 +61,8 @@ $(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.xz
 
 .PHONY: docker-image-base
 image-base: $(OUTPUTDIR)/Dockerfile.base
-	docker build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
+	${DOCKER} build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
 
 .PHONY: docker-image-base-devel
 image-base-devel: $(OUTPUTDIR)/Dockerfile.base-devel
-	docker build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
+	${DOCKER} build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
