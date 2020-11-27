@@ -1,6 +1,7 @@
 # Arch Linux Docker Image
 [![pipeline status](https://gitlab.archlinux.org/archlinux/archlinux-docker/badges/master/pipeline.svg)](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/commits/master)
 
+
 This repository contains all scripts and files needed to create a Docker image for Arch Linux.
 
 ## Dependencies
