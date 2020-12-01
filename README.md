@@ -40,7 +40,7 @@ build the image `archlinux:base-devel` which additionally has the `base-devel` g
 
 ### Daily builds
 
-Daily images are build with scheduled [GitLabCI](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/.gitlab-ci.yml) using our own runner infrastructure. Initially root filesystem archives are constructed and provided in our [package registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/packages). The released multi-stage Dockerfile downloads those archives and verifies their integrity before unpacking it into a Docker image layer. Images are build using [kaniko](https://github.com/GoogleContainerTools/kaniko) to avoid using privileged Docker containers, which also publishes them to our DockerHub repository.
+Daily images are build with scheduled [GitLab CI](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/.gitlab-ci.yml) using our own runner infrastructure. Initially root filesystem archives are constructed and provided in our [package registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/packages). The released multi-stage Dockerfile downloads those archives and verifies their integrity before unpacking it into a Docker image layer. Images are built using [kaniko](https://github.com/GoogleContainerTools/kaniko) to avoid using privileged Docker containers, which also publishes them to our DockerHub repository.
 
 ### Weekly releases
 
@@ -48,4 +48,4 @@ Weekly releases to the official DockerHub library use the same pipeline as daily
 
 ### Development
 
-Changes in Git feature branches are build and tested using the pipeline as well. Development images are uploaded to our [GitLab Container Registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/container_registry).
+Changes in Git feature branches are built and tested using the pipeline as well. Development images are uploaded to our [GitLab Container Registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/container_registry).
