@@ -22,7 +22,7 @@ FROM scratch AS root
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig
-RUN sh -c 'ls usr/lib/sysusers.d/*.conf | /usr/share/libalpm/scripts/systemd-hook sysusers '
+RUN /usr/share/libalpm/scripts/systemd-hook sysusers
 
 ENV LANG=en_US.UTF-8
 CMD ["/usr/bin/bash"]
