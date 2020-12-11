@@ -22,7 +22,6 @@ FROM scratch AS root
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig
-RUN /usr/share/libalpm/scripts/systemd-hook sysusers
 
 ENV LANG=en_US.UTF-8
 CMD ["/usr/bin/bash"]

@@ -23,6 +23,9 @@ fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
 
 	ln -fs /usr/lib/os-release $(BUILDDIR)/etc/os-release
 
+	# add system users
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) /usr/bin/systemd-sysusers --root "/"
+
 	# remove passwordless login for root (see CVE-2019-5021 for reference)
 	sed -i -e 's/^root::/root:!:/' "$(BUILDDIR)/etc/shadow"
 
