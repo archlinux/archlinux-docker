@@ -151,6 +151,8 @@ image:publish:secure:
       - tags
 
 .test-script: &test-script
+  - test "$(cat /etc/group | wc -l)" -gt 10
+  - test "$(cat /etc/passwd | wc -l)" -gt 10
   - pacman -Sy
   - pacman -Qqk
   - pacman -Syu --noconfirm docker grep
