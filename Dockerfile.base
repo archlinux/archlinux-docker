@@ -11,9 +11,9 @@
 FROM alpine:3.12 AS verify
 RUN apk add --no-cache curl bash
 SHELL ["/bin/bash", "-c"]
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20201220.0.11707
-RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/349/download)" && \
-    sha256sum -c <<< "6ad81aba59d50338c89055514b43a3f0bbe3c0e0d00404b8554259d2f039fef3  base-20201220.0.11707.tar.xz" && \
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20201221.0.11810
+RUN ROOTFS="$(curl -sOJL --continue-at - -w "%{filename_effective}" https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/353/download)" && \
+    sha256sum -c <<< "f960db11480aec29f2ec74aca62adc139805a9bf78b81b0f49a26720b98b8acb  base-20201221.0.11810.tar.xz" && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --file "${ROOTFS}"
 
