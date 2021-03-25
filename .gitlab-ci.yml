@@ -11,7 +11,7 @@ stages:
 
 lint:
   stage: lint
-  image: hadolint/hadolint:latest
+  image: hadolint/hadolint:latest-alpine
   # DL3018: We don't need alpine version pins
   script: hadolint --ignore DL3018 Dockerfile.template
   except:
