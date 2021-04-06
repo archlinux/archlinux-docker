@@ -281,11 +281,11 @@ publish:
     - 'git commit
         -m "archlinux: Release ${BUILD_VERSION}"
         -m "This is an automated release [1]."
-        -m "Maintainers: ${maintainers}"
         -m "[1] ${CI_PROJECT_URL}/-/blob/master/.gitlab-ci.yml"'
     - git push -u origin "$head"
-    - gh pr create
+    - 'gh pr create
         --repo docker-library/official-images
-        --fill
+        --title "$(git show --no-patch --format="%s")"
+        --body "$(printf "%s\n\n---\n\nMaintainers: ${maintainers}\n" "$(git show --no-patch --format="%b")")"
         --base master
-        --head archlinux:"$head"
+        --head archlinux:"$head"'
