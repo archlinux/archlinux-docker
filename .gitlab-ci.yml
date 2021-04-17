@@ -96,6 +96,7 @@ rootfs:secure:
     entrypoint: [""]
   script:
     - /kaniko/executor
+      --force
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR/output
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.$GROUP
@@ -148,6 +149,7 @@ image:publish:secure:
         LATEST="--destination archlinux/archlinux:latest";
       fi
     - /kaniko/executor
+      --force
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
