@@ -2,12 +2,30 @@ default:
   image: "archlinux:latest"
 
 stages:
+  - cleanup
   - lint
   - rootfs
   - image
   - test
   - release
   - publish
+
+cleanup:
+  stage: cleanup
+  tags:
+    - secure
+  only:
+    refs:
+      - schedules
+    variables:
+      - $CLEANUP_PACKAGE_REGISTRY == "TRUE"
+  before_script:
+    - pacman -Syu --noconfirm jq
+  script:
+    - |
+      for id in $(curl --silent --fail --show-error "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages?per_page=100&order_by=created_at&sort=asc" | jq '.[] | select(.created_at | split("T")[0] | . < (now-60*60*24*60|strflocaltime("%Y-%m-%d"))) | .id'); do
+        curl --silent --fail --show-error --request DELETE --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/${id}"
+      done
 
 lint:
   stage: lint
@@ -78,6 +96,7 @@ rootfs:secure:
     entrypoint: [""]
   script:
     - /kaniko/executor
+      --force
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR/output
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.$GROUP
@@ -130,6 +149,7 @@ image:publish:secure:
         LATEST="--destination archlinux/archlinux:latest";
       fi
     - /kaniko/executor
+      --force
       --whitelist-var-run="false"
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
