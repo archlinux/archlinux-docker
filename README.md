@@ -16,6 +16,15 @@ While the images are regularly kept up to date it is strongly recommended runnin
 * `pacman` needs to work out of the box
 * All installed packages have to be kept unmodified
 
+>>>
+     ⚠️⚠️⚠️ NOTE: For Security Reasons, these images strip the pacman lsign key.
+     This is because the same key would be spread to all containers of the same
+     image, allowing for malicious actors to inject packages (via, for example,
+     a man-in-the-middle). In order to create an lsign-key run `pacman-key
+     --init` on the first execution, but be careful to not redistribute that
+     key.⚠️⚠️⚠️  
+>>>
+
 ## Building your own image
 
 [This repository](https://gitlab.archlinux.org/archlinux/archlinux-docker) contains all scripts and files needed to create a Docker image for Arch Linux.
