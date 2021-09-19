@@ -225,7 +225,7 @@ release:
         sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > output/Dockerfile.${group}
         package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.xz)
         sed -i "s|TEMPLATE_ROOTFS_RELEASE_URL|https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v${BUILD_VERSION}|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_ROOTFS_URL|${package_url}|" output/Dockerfile.${group}
+        sed -i "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"\$(curl -sOJL -w \"%{filename_effective}\" \"${package_url}\")\"|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" output/Dockerfile.${group}
       done
     - >
