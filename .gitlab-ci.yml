@@ -258,6 +258,7 @@ release:
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       echo "Creating release"
       release-cli create --name "Release ${BUILD_VERSION}" --description "Release ${BUILD_VERSION}" \
+      --private-token "${GITLAB_PROJECT_TOKEN}" \
       --tag-name v${BUILD_VERSION} --ref "releases" \
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_url}\"}" \
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_sha_url}\"}" \
