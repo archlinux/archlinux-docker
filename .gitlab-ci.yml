@@ -24,5 +24,7 @@ release:
 
       # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
-      echo "Creating release"
-      echo "GITLAB_PROJECT_TOKEN: ${GITLAB_PROJECT_TOKEN}"
+      echo "Getting release"
+      release-cli get \
+      --private-token "${GITLAB_PROJECT_TOKEN}" \
+      --tag-name v${BUILD_VERSION}
