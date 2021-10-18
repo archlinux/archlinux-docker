@@ -11,7 +11,7 @@ release:
     - apk update
     - apk add jq curl httpie
   script:
-    - export BUILD_VERSION=20211017.0.36844
+    - export BUILD_VERSION=20211018.0.36946
     - |
       base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
       echo "${base_url}"
