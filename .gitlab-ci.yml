@@ -26,4 +26,4 @@ release:
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       echo "Getting release"
       release-cli --private-token "${GITLAB_PROJECT_TOKEN}" get \
-      --tag-name v${BUILD_VERSION}
+      --tag-name v20211017.0.36844
