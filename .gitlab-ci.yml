@@ -11,7 +11,18 @@ release:
     - apk update
     - apk add jq curl httpie
   script:
-    - export GITLAB_PROJECT_TOKEN=foobar
     - export BUILD_VERSION=20211017.0.36844
     - |
+      base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
+      echo "${base_url}"
+      base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz.SHA256)
+      echo "${base_sha_url}"
+      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz)
+      echo "${base_devel_url}"
+      base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz.SHA256)
+      echo "${base_devel_sha_url}"
+
+      # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
+      # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
+      echo "Creating release"
       echo "GITLAB_PROJECT_TOKEN: ${GITLAB_PROJECT_TOKEN}"
