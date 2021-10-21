@@ -97,7 +97,7 @@ rootfs:secure:
   script:
     - /kaniko/executor
       --force
-      --whitelist-var-run="false"
+      --ignore-var-run="false"
       --context $CI_PROJECT_DIR/output
       --dockerfile $CI_PROJECT_DIR/output/Dockerfile.$GROUP
       --destination $CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG
