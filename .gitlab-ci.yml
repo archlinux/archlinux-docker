@@ -92,7 +92,7 @@ rootfs:secure:
 .image:
   stage: image
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: gcr.io/kaniko-project/executor:v1.7.0-debug
     entrypoint: [""]
   script:
     - /kaniko/executor
