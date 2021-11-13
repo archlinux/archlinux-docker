@@ -150,7 +150,7 @@ image:publish:secure:
       fi
     - /kaniko/executor
       --force
-      --whitelist-var-run="false"
+      --ignore-var-run="false"
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
       --destination archlinux/archlinux:$GROUP
