@@ -34,7 +34,7 @@ define rootfs
 	# fixes #22
 	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f $(OUTPUTDIR)/$(1).tar
 
-	cd $(OUTPUTDIR); zstd -T0 -8 $(1).tar; sha256sum $(1).tar.zst > $(1).tar.zst.SHA256
+	cd $(OUTPUTDIR); zstd --long -T0 -8 $(1).tar; sha256sum $(1).tar.zst > $(1).tar.zst.SHA256
 endef
 
 define dockerfile
