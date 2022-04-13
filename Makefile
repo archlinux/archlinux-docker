@@ -18,7 +18,7 @@ define rootfs
 
 	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
 
-fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
+	fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
 	fakechroot -- fakeroot -- chroot $(BUILDDIR) locale-gen
 	fakechroot -- fakeroot -- chroot $(BUILDDIR) sh -c 'pacman-key --init && pacman-key --populate archlinux && bash -c "rm -rf etc/pacman.d/gnupg/{openpgp-revocs.d/,private-keys-v1.d/,pubring.gpg~,gnupg.S.}*"'
 
@@ -34,14 +34,14 @@ fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
 	# fixes #22
 	fakeroot -- tar --numeric-owner --xattrs --acls --exclude-from=exclude -C $(BUILDDIR) -c . -f $(OUTPUTDIR)/$(1).tar
 
-	cd $(OUTPUTDIR); xz -9 -T0 -f $(1).tar; sha256sum $(1).tar.xz > $(1).tar.xz.SHA256
+	cd $(OUTPUTDIR); zstd -T0 -8 $(1).tar; sha256sum $(1).tar.zst > $(1).tar.zst.SHA256
 endef
 
 define dockerfile
-	sed -e "s|TEMPLATE_ROOTFS_FILE|$(1).tar.xz|" \
+	sed -e "s|TEMPLATE_ROOTFS_FILE|$(1).tar.zst|" \
 	    -e "s|TEMPLATE_ROOTFS_RELEASE_URL|Local build|" \
-	    -e "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"$(1).tar.xz\"|" \
-	    -e "s|TEMPLATE_ROOTFS_HASH|$$(cat $(OUTPUTDIR)/$(1).tar.xz.SHA256)|" \
+	    -e "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"$(1).tar.zst\"|" \
+	    -e "s|TEMPLATE_ROOTFS_HASH|$$(cat $(OUTPUTDIR)/$(1).tar.zst.SHA256)|" \
 	    Dockerfile.template > $(OUTPUTDIR)/Dockerfile.$(1)
 endef
 
@@ -49,16 +49,16 @@ endef
 clean:
 	rm -rf $(BUILDDIR) $(OUTPUTDIR)
 
-$(OUTPUTDIR)/base.tar.xz:
+$(OUTPUTDIR)/base.tar.zst:
 	$(call rootfs,base,base)
 
-$(OUTPUTDIR)/base-devel.tar.xz:
+$(OUTPUTDIR)/base-devel.tar.zst:
 	$(call rootfs,base-devel,base base-devel)
 
-$(OUTPUTDIR)/Dockerfile.base: $(OUTPUTDIR)/base.tar.xz
+$(OUTPUTDIR)/Dockerfile.base: $(OUTPUTDIR)/base.tar.zst
 	$(call dockerfile,base)
 
-$(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.xz
+$(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.zst
 	$(call dockerfile,base-devel)
 
 .PHONY: docker-image-base
