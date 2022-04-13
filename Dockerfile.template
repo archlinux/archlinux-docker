@@ -10,11 +10,13 @@
 # allow us to automate the releaes process.
 FROM alpine:3.12 AS verify
 COPY TEMPLATE_ROOTFS_FILE /
-RUN apk add --no-cache curl bash
-SHELL ["/bin/bash", "-c"]
+RUN apk add --no-cache curl tar zstd
+
 # TEMPLATE_ROOTFS_RELEASE_URL
 RUN TEMPLATE_ROOTFS_DOWNLOAD && \
-    sha256sum -c <<< "TEMPLATE_ROOTFS_HASH" && \
+    echo "TEMPLATE_ROOTFS_HASH" > /tmp/rootfs.tar.sha256 && \
+    cat /tmp/rootfs.tar.sha256 && \
+    sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --file "${ROOTFS}"
 
