@@ -217,16 +217,16 @@ release:
 
       # Upload rootfs to the Generic Packages Repository
       for group in base base-devel; do
-        sed -i "s|${group}.tar.xz|${group}-${BUILD_VERSION}.tar.xz|" output/${group}.tar.xz.SHA256
-        echo "Uploading ${group}.tar.xz"
-        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz
-        echo "Uploading ${group}.tar.xz.SHA256"
-        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.xz.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.xz.SHA256
+        sed -i "s|${group}.tar.zst|${group}-${BUILD_VERSION}.tar.zst|" output/${group}.tar.zst.SHA256
+        echo "Uploading ${group}.tar.zst"
+        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst
+        echo "Uploading ${group}.tar.zst.SHA256"
+        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst.SHA256
         sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > output/Dockerfile.${group}
-        package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.xz)
+        package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.zst)
         sed -i "s|TEMPLATE_ROOTFS_RELEASE_URL|https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v${BUILD_VERSION}|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"\$(curl -sOJL -w \"%{filename_effective}\" \"${package_url}\")\"|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.xz.SHA256)|" output/Dockerfile.${group}
+        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.zst.SHA256)|" output/Dockerfile.${group}
       done
     - >
       curl -sSf --request POST -o commit-response.json
@@ -245,26 +245,26 @@ release:
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
     - echo "BUILD_COMMIT=$(jq -r '.id' commit-response.json)" >> build.env
     - |
-      base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz)
+      base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.zst)
       echo "${base_url}"
-      base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.xz.SHA256)
+      base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.zst.SHA256)
       echo "${base_sha_url}"
-      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz)
+      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.zst)
       echo "${base_devel_url}"
-      base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.xz.SHA256)
+      base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.zst.SHA256)
       echo "${base_devel_sha_url}"
 
-      # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.xz\"
+      # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst\"
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       echo "Creating release"
       release-cli --private-token "${GITLAB_PROJECT_TOKEN}" create \
       --name "Release ${BUILD_VERSION}" \
       --description "Release ${BUILD_VERSION}" \
       --tag-name v${BUILD_VERSION} --ref "releases" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_url}\"}" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_sha_url}\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz\",\"url\":\"${base_devel_url}\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.xz.SHA256\",\"url\":\"${base_devel_sha_url}\"}"
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst\",\"url\":\"${base_url}\"}" \
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_sha_url}\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${base_devel_url}\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_devel_sha_url}\"}"
   artifacts:
     reports:
       dotenv: build.env
