@@ -9,11 +9,13 @@
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the releaes process.
 FROM alpine:3.12 AS verify
-RUN apk add --no-cache curl bash
-SHELL ["/bin/bash", "-c"]
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20220413.0.52875
-RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/2350/download")" && \
-    sha256sum -c <<< "9bf524b4aa7c4cf6ef46ce707e1107acbd5d830696ff2f1e0dd111ad042cea3d  base-20220413.0.52875.tar.xz" && \
+RUN apk add --no-cache curl tar zstd
+
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20220415.0.53188
+RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/2354/download")" && \
+    echo "83a7b7da0447076833fe85b333e3f47bc7c15af4a778d471f3160bc2af55f740  base-20220415.0.53188.tar.zst" > /tmp/rootfs.tar.sha256 && \
+    cat /tmp/rootfs.tar.sha256 && \
+    sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --file "${ROOTFS}"
 
