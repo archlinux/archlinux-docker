@@ -227,6 +227,7 @@ release:
         sed -i "s|TEMPLATE_ROOTFS_RELEASE_URL|https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v${BUILD_VERSION}|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"\$(curl -sOJL -w \"%{filename_effective}\" \"${package_url}\")\"|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.zst.SHA256)|" output/Dockerfile.${group}
+        sed -i "s|TEMPLATE_ROOTFS_VERSION|${BUILD_VERSION}|" output/Dockerfile.${group}
       done
     - >
       curl -sSf --request POST -o commit-response.json

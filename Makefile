@@ -42,6 +42,7 @@ define dockerfile
 	    -e "s|TEMPLATE_ROOTFS_RELEASE_URL|Local build|" \
 	    -e "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"$(1).tar.zst\"|" \
 	    -e "s|TEMPLATE_ROOTFS_HASH|$$(cat $(OUTPUTDIR)/$(1).tar.zst.SHA256)|" \
+	    -e "s|TEMPLATE_VERSION_ID|dev|" \
 	    Dockerfile.template > $(OUTPUTDIR)/Dockerfile.$(1)
 endef
 
