@@ -26,5 +26,5 @@ COPY --from=verify /rootfs/ /
 RUN ldconfig && \
     sed -i '/BUILD_ID/a VERSION_ID=TEMPLATE_VERSION_ID' /etc/os-release
 
-ENV LANG=en_US.UTF-8
+ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
