@@ -17,7 +17,7 @@ cleanup:
     - docker
   only:
     refs:
-      - schedules
+      - schedules@archlinux/archlinux-docker
     variables:
       - $CLEANUP_PACKAGE_REGISTRY == "TRUE"
   before_script:
@@ -74,10 +74,13 @@ get_version:
 rootfs:
   extends: .rootfs
   except:
-    - master
-    - releases
-    - schedules
-    - tags
+    - master@archlinux/archlinux-docker
+    - releases@archlinux/archlinux-docker
+    - schedules@archlinux/archlinux-docker
+    - tags@archlinux/archlinux-docker
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
 
 rootfs:secure:
   extends: .rootfs
@@ -85,8 +88,8 @@ rootfs:secure:
     - secure
     - docker
   only:
-    - master
-    - schedules
+    - master@archlinux/archlinux-docker
+    - schedules@archlinux/archlinux-docker
   except:
     - tags
     - releases
@@ -110,9 +113,9 @@ rootfs:secure:
 image:build:
   extends: .image
   except:
-    - master
+    - master@archlinux/archlinux-docker
     - releases
-    - schedules
+    - schedules@archlinux/archlinux-docker
     - tags
   before_script:
     - pacman -Syu --noconfirm podman
@@ -124,8 +127,8 @@ image:build:secure:
     - secure
     - vm
   only:
-    - master
-    - schedules
+    - master@archlinux/archlinux-docker
+    - schedules@archlinux/archlinux-docker
   except:
     - tags
   before_script:
@@ -142,7 +145,10 @@ image:publish:secure:
     - secure
     - vm
   only:
-    - tags
+    - tags@archlinux/archlinux-docker
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
@@ -223,7 +229,7 @@ release:
     - docker
   only:
     refs:
-      - schedules
+      - schedules@archlinux/archlinux-docker
     variables:
       - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
       - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
