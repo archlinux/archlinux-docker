@@ -7,7 +7,7 @@
 # just download and verify it in the first stage of this Dockerfile.
 # The second stage is for actually configuring the system a little bit.
 # Some templating is done in order to allow us to easily build different configurations and to
-# allow us to automate the releaes process.
+# allow us to automate the release process.
 FROM alpine:3.17 AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 RUN apk add --no-cache curl tar zstd
