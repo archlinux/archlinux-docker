@@ -11,9 +11,9 @@
 FROM alpine:3.16 AS verify
 RUN apk add --no-cache curl tar zstd
 
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20221017.0.95102
-RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/3400/download")" && \
-    echo "a1585552d1bb25710ed9eff6103bf2e8ade7d13bc7a1b7e4d44921a8a88a470a  base-devel-20221017.0.95102.tar.zst" > /tmp/rootfs.tar.sha256 && \
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20221018.0.95329
+RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/3404/download")" && \
+    echo "1ee2b64332c0d2ea898252bbd83fb06f43f8a2a739cdefa96b700f0ec7f4c594  base-devel-20221018.0.95329.tar.zst" > /tmp/rootfs.tar.sha256 && \
     cat /tmp/rootfs.tar.sha256 && \
     sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
