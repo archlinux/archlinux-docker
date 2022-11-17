@@ -8,7 +8,7 @@
 # The second stage is for actually configuring the system a little bit.
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the releaes process.
-FROM alpine:3.16 AS verify
+FROM alpine:3.17 AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 RUN apk add --no-cache curl tar zstd
 
