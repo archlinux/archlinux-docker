@@ -7,13 +7,13 @@
 # just download and verify it in the first stage of this Dockerfile.
 # The second stage is for actually configuring the system a little bit.
 # Some templating is done in order to allow us to easily build different configurations and to
-# allow us to automate the releaes process.
+# allow us to automate the release process.
 FROM alpine:3.17 AS verify
 RUN apk add --no-cache curl tar zstd
 
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230416.0.143453
-RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4390/download")" && \
-    echo "23eb2773468372caa5bf89ba7a86918e4dbfdd724aff96e5dec42a1e54214b10  base-20230416.0.143453.tar.zst" > /tmp/rootfs.tar.sha256 && \
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230417.0.143708
+RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4394/download")" && \
+    echo "f8228d0ed51571485b45b53cb425ed5e4b3be61339b5b799f9f8bf69dcbec12b  base-20230417.0.143708.tar.zst" > /tmp/rootfs.tar.sha256 && \
     cat /tmp/rootfs.tar.sha256 && \
     sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
