@@ -1,8 +1,3 @@
-LABEL org.opencontainers.image.source=https://gitlab.archlinux.org/archlinux/archlinux-docker
-LABEL org.opencontainers.image.description="Official containerd image of Arch Linux, a simple, lightweight Linux distribution aimed for flexibility."
-LABEL org.opencontainers.image.licenses=GPL-3.0-or-later
-
-# We're using a multistage Docker build here in order to allow us to release a self-verifying
 # Docker image when built on the official Docker infrastructure.
 # They require us to verify the source integrity in some way while making sure that this is a
 # reproducible build.
