@@ -41,7 +41,10 @@ define dockerfile
 	    -e "s|TEMPLATE_ROOTFS_RELEASE_URL|Local build|" \
 	    -e "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"$(1).tar.zst\"|" \
 	    -e "s|TEMPLATE_ROOTFS_HASH|$$(cat $(OUTPUTDIR)/$(1).tar.zst.SHA256)|" \
+	    -e "s|TEMPLATE_TITLE|Arch Linux Dev Image|" \
 	    -e "s|TEMPLATE_VERSION_ID|dev|" \
+	    -e "s|TEMPLATE_REVISION|$$(git rev-parse HEAD)|" \
+	    -e "s|TEMPLATE_CREATED|$$(date -Is)|" \
 	    Dockerfile.template > $(OUTPUTDIR)/Dockerfile.$(1)
 endef
 

@@ -8,6 +8,7 @@
 # The second stage is for actually configuring the system a little bit.
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the release process.
+
 FROM alpine:3.18 AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 RUN apk add --no-cache curl tar zstd
@@ -21,6 +22,18 @@ RUN TEMPLATE_ROOTFS_DOWNLOAD && \
     tar -C /rootfs --extract --file "${ROOTFS}"
 
 FROM scratch AS root
+
+LABEL org.opencontainers.image.title="TEMPLATE_TITLE"
+LABEL org.opencontainers.image.description="Official containerd image of Arch Linux, a simple, lightweight Linux distribution aimed for flexibility."
+LABEL org.opencontainers.image.authors="Santiago Torres-Arias <santiago@archlinux.org> (@SantiagoTorres), Christian Rebischke <Chris.Rebischke@archlinux.org> (@shibumi), Justin Kromlinger <hashworks@archlinux.org> (@hashworks)"
+LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/README.md"
+LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
+LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
+LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
+LABEL org.opencontainers.image.version="TEMPLATE_VERSION_ID"
+LABEL org.opencontainers.image.revision="TEMPLATE_REVISION"
+LABEL org.opencontainers.image.created="TEMPLATE_CREATED"
+
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
