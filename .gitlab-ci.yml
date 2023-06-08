@@ -227,7 +227,7 @@ release:
         sed -i "s|TEMPLATE_ROOTFS_RELEASE_URL|https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v${BUILD_VERSION}|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"\$(curl -sOJL -w \"%{filename_effective}\" \"${package_url}\")\"|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.zst.SHA256)|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_TITLE|Arch Linux ${group} Image" output/Dockerfile.${group}
+        sed -i "s|TEMPLATE_TITLE|Arch Linux ${group} Image|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_VERSION_ID|${BUILD_VERSION}|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_REVISION|${CI_COMMIT_SHA}|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_CREATED|$(date -Is)|" output/Dockerfile.${group}
