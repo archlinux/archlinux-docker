@@ -1,4 +1,3 @@
-# We're using a multistage Docker build here in order to allow us to release a self-verifying
 # Docker image when built on the official Docker infrastructure.
 # They require us to verify the source integrity in some way while making sure that this is a
 # reproducible build.
@@ -8,22 +7,35 @@
 # The second stage is for actually configuring the system a little bit.
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the release process.
+
 FROM alpine:3.18 AS verify
 RUN apk add --no-cache curl tar zstd
 
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230608.0.156371
-RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4646/download")" && \
-    echo "9a0fc286c86eda907ce1503a5dd72f4d74bbac409768419218753874909e393a  base-20230608.0.156371.tar.zst" > /tmp/rootfs.tar.sha256 && \
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230608.0.156530
+RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4652/download")" && \
+    echo "ee1071938fb8f7ae704a2ee568ffab63e3c7d5836147fd4d72ba31f7829d3167  base-20230608.0.156530.tar.zst" > /tmp/rootfs.tar.sha256 && \
     cat /tmp/rootfs.tar.sha256 && \
     sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --file "${ROOTFS}"
 
 FROM scratch AS root
+
+LABEL org.opencontainers.image.title="Arch Linux base Image"
+LABEL org.opencontainers.image.description="Official containerd image of Arch Linux, a simple, lightweight Linux distribution aimed for flexibility."
+LABEL org.opencontainers.image.authors="Santiago Torres-Arias <santiago@archlinux.org> (@SantiagoTorres), Christian Rebischke <Chris.Rebischke@archlinux.org> (@shibumi), Justin Kromlinger <hashworks@archlinux.org> (@hashworks)"
+LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/README.md"
+LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
+LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
+LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
+LABEL org.opencontainers.image.version="20230608.0.156530"
+LABEL org.opencontainers.image.revision="cd6d85768d41f523f0ed2fe0aa5d4e1759f0cef4"
+LABEL org.opencontainers.image.created="2023-06-08T18:50:27+00:00"
+
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=TEMPLATE_VERSION_ID' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20230608.0.156530' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
