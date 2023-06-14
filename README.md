@@ -1,10 +1,11 @@
-# Arch Linux Docker Image
+# Arch Linux OCI Images
 
 [![pipeline status](https://gitlab.archlinux.org/archlinux/archlinux-docker/badges/master/pipeline.svg)](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/commits/master)
 
-Arch Linux provides Docker images both in the [official DockerHub library](https://hub.docker.com/_/archlinux) (`docker pull library/archlinux:latest`) and in our [own repository](https://hub.docker.com/r/archlinux/archlinux) (`docker pull archlinux/archlinux:latest`).
-
-Images in the official library are updated weekly while our own repository is updated daily.
+Arch Linux provides OCI-Compliant container images in multiple repositories:
+* [Weekly in the official DockerHub library](https://hub.docker.com/_/archlinux): `podman pull docker.io/archlinux/archlinux:latest` or `docker pull archlinux/archlinux:latest`
+* [Daily in our DockerHub repository](https://hub.docker.com/r/archlinux/archlinux): `podman pull docker.io/archlinux/archlinux:latest` or `docker pull archlinux/archlinux:latest`
+* [Daily in our Quay.io repository](https://quay.io/repository/archlinux/archlinux): `podman pull quay.io/archlinux/archlinux:latest` or `docker pull quay.io/archlinux/archlinux:latest`
 
 Two versions of the image are provided: `base` (approx. 150 MiB) and `base-devel` (approx. 260 MiB), containing the respective meta package / package group. Both are available as tags with `latest` pointing to `base`. Additionally, images are tagged with their date and build job number, f.e. `base-devel-20201118.0.9436`.
 
@@ -22,12 +23,12 @@ While the images are regularly kept up to date it is strongly recommended runnin
      image, allowing for malicious actors to inject packages (via, for example,
      a man-in-the-middle). In order to create an lsign-key run `pacman-key
      --init` on the first execution, but be careful to not redistribute that
-     key.⚠️⚠️⚠️  
+     key.⚠️⚠️⚠️
 >>>
 
 ## Building your own image
 
-[This repository](https://gitlab.archlinux.org/archlinux/archlinux-docker) contains all scripts and files needed to create a Docker image for Arch Linux.
+[This repository](https://gitlab.archlinux.org/archlinux/archlinux-docker) contains all scripts and files needed to create an OCI image for Arch Linux.
 
 ### Dependencies
 Install the following Arch Linux packages:
@@ -47,9 +48,9 @@ build the image `archlinux:base-devel` which additionally has the `base-devel` g
 
 ## Pipeline
 
-### Daily builds
+### Daily releases
 
-Daily images are build with scheduled [GitLab CI](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/.gitlab-ci.yml) using our own runner infrastructure. Initially root filesystem archives are constructed and provided in our [package registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/packages). The released multi-stage Dockerfile downloads those archives and verifies their integrity before unpacking it into a Docker image layer. Images are built using [kaniko](https://github.com/GoogleContainerTools/kaniko) to avoid using privileged Docker containers, which also publishes them to our DockerHub repository.
+Daily images are build with scheduled [GitLab CI](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/.gitlab-ci.yml) using our own runner infrastructure. Initially root filesystem archives are constructed and provided in our [package registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/packages). The released multi-stage Dockerfile downloads those archives and verifies their integrity before unpacking it into a OCI image layer. Images are built using [kaniko](https://github.com/GoogleContainerTools/kaniko) to avoid using privileged Docker containers, which also publishes them to our external repositories.
 
 ### Weekly releases
 
