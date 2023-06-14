@@ -16,7 +16,7 @@ define rootfs
 		--noscriptlet \
 		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
 
-	cp --recursive --preserve=timestamps --backup --suffix=.pacnew rootfs/* $(BUILDDIR)/
+	cp --recursive --preserve=timestamps rootfs/* $(BUILDDIR)/
 
 	fakechroot -- fakeroot -- chroot $(BUILDDIR) update-ca-trust
 	fakechroot -- fakeroot -- chroot $(BUILDDIR) sh -c 'pacman-key --init && pacman-key --populate && bash -c "rm -rf etc/pacman.d/gnupg/{openpgp-revocs.d/,private-keys-v1.d/,pubring.gpg~,gnupg.S.}*"'
