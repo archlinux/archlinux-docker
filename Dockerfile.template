@@ -11,6 +11,8 @@
 FROM archlinux/archlinux:latest AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 
+RUN pacman -Syu --noconfirm
+
 # TEMPLATE_ROOTFS_RELEASE_URL
 RUN TEMPLATE_ROOTFS_DOWNLOAD && \
     echo "TEMPLATE_ROOTFS_HASH" > /tmp/rootfs.tar.sha256 && \
