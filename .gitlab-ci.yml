@@ -30,8 +30,8 @@ cleanup:
 lint:
   stage: lint
   image: hadolint/hadolint:latest-alpine
-  # DL3018: We don't need alpine version pins
-  script: hadolint --ignore DL3018 Dockerfile.template
+  # DL3007: We don't need image version pins, we use the bleeding edge
+  script: hadolint --ignore DL3007 Dockerfile.template
   except:
     - releases
     - tags
