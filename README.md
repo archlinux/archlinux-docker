@@ -39,18 +39,18 @@ Install the following Arch Linux packages:
 * fakechroot
 * fakeroot
 
-Make sure your user can directly interact with Docker (i.e. `docker info` works).
+Make sure your user can directly interact with Podman (i.e. `podman info` works).
 
 ### Usage
-Run `make docker-image-base` to build the `archlinux:base` image with the
-`base` meta package installed. You can also run `make docker-image-base-devel` to
+Run `make oci-image-base` to build the `archlinux:base` image with the
+`base` meta package installed. You can also run `make oci-image-base-devel` to
 build the image `archlinux:base-devel` which additionally has the `base-devel` group installed.
 
 ## Pipeline
 
 ### Daily releases
 
-Daily images are build with scheduled [GitLab CI](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/.gitlab-ci.yml) using our own runner infrastructure. Initially root filesystem archives are constructed and provided in our [package registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/packages). The released multi-stage Dockerfile downloads those archives and verifies their integrity before unpacking it into a OCI image layer. Images are built using [kaniko](https://github.com/GoogleContainerTools/kaniko) to avoid using privileged Docker containers, which also publishes them to our external repositories.
+Daily images are build with scheduled [GitLab CI](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/.gitlab-ci.yml) using our own runner infrastructure. Initially root filesystem archives are constructed and provided in our [package registry](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/packages). The released multi-stage Dockerfile downloads those archives and verifies their integrity before unpacking it into an OCI image layer. Images are built using [podman](https://podman.io/), which also publishes them to our external repositories.
 
 ### Weekly releases
 

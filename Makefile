@@ -1,4 +1,4 @@
-DOCKER=docker
+OCITOOL=podman # or docker
 BUILDDIR=$(shell pwd)/build
 OUTPUTDIR=$(shell pwd)/output
 
@@ -64,10 +64,12 @@ $(OUTPUTDIR)/Dockerfile.base: $(OUTPUTDIR)/base.tar.zst
 $(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.zst
 	$(call dockerfile,base-devel)
 
-.PHONY: docker-image-base
-image-base: $(OUTPUTDIR)/Dockerfile.base
-	${DOCKER} build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
+# The following is for local builds only, it is not used by the CI/CD pipeline
 
-.PHONY: docker-image-base-devel
+.PHONY: oci-image-base
+image-base: $(OUTPUTDIR)/Dockerfile.base
+	${OCITOOL} build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
+
+.PHONY: oci-image-base-devel
 image-base-devel: $(OUTPUTDIR)/Dockerfile.base-devel
-	${DOCKER} build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
+	${OCITOOL} build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
