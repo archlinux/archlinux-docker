@@ -8,9 +8,8 @@
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the release process.
 
-FROM alpine:3.18 AS verify
+FROM archlinux/archlinux:latest AS verify
 COPY TEMPLATE_ROOTFS_FILE /
-RUN apk add --no-cache curl tar zstd
 
 # TEMPLATE_ROOTFS_RELEASE_URL
 RUN TEMPLATE_ROOTFS_DOWNLOAD && \
