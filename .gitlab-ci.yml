@@ -14,6 +14,7 @@ cleanup:
   stage: cleanup
   tags:
     - secure
+    - docker
   only:
     refs:
       - schedules
@@ -79,6 +80,7 @@ rootfs:secure:
   extends: .rootfs
   tags:
     - secure
+    - docker
   only:
     - master
     - schedules
@@ -217,6 +219,7 @@ release:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   tags:
     - secure
+    - docker
   only:
     refs:
       - schedules
