@@ -130,7 +130,9 @@ image:build:secure:
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
 
-# Build and publish to the Arch Linux group namespace: https://hub.docker.com/r/archlinux/archlinux
+# Build and publish to the Arch Linux group namespaces:
+# https://hub.docker.com/r/archlinux/archlinux
+# https://quay.io/repository/archlinux/archlinux
 image:publish:secure:
   extends: .image
   retry: 2
@@ -142,19 +144,21 @@ image:publish:secure:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
-    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKERHUB_USERNAME\",\"password\":\"$DOCKERHUB_ACCESS_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKERHUB_USERNAME\",\"password\":\"$DOCKERHUB_ACCESS_TOKEN\"}, \"quay.io\":{\"username\":\"$QUAY_USERNAME\",\"password\":\"$QUAY_PASSWORD\"}}}" > /kaniko/.docker/config.json
   script:
     - LATEST=""
     - if [[ "$GROUP" == "base" ]]; then
-        LATEST="--destination archlinux/archlinux:latest";
+        LATEST="--destination docker.io/archlinux/archlinux:latest --destination quay.io/archlinux/archlinux:latest";
       fi
     - /kaniko/executor
       --force
       --ignore-var-run="false"
       --context $CI_PROJECT_DIR
       --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
-      --destination archlinux/archlinux:$GROUP
-      --destination archlinux/archlinux:$GROUP-$BUILD_VERSION
+      --destination docker.io/archlinux/archlinux:$GROUP
+      --destination docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION
+      --destination quay.io/archlinux/archlinux:$GROUP
+      --destination quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION
       $LATEST
 
 .test:
