@@ -209,8 +209,7 @@ test:base-devel:
     - gcc -v
     - g++ -v
     - make -v
-    - echo "Test for #70"
-    - test -u /usr/bin/sudo
+    - test -u /usr/bin/sudo   # issue 70
     - test -u /usr/bin/passwd
 
 release:
