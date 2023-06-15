@@ -8,7 +8,7 @@
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the release process.
 
-FROM archlinux/archlinux:latest AS verify
+FROM quay.io/archlinux/archlinux:latest AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 
 RUN pacman -Syu --noconfirm

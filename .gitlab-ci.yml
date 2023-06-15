@@ -91,9 +91,10 @@ rootfs:secure:
 
 .image:
   stage: image
-  image: docker:stable
   tags:
     - vm
+  before_script:
+    - pacman -Syu --noconfirm podman
   script:
     - podman build
         -f "$CI_PROJECT_DIR/output/Dockerfile.$GROUP"
@@ -112,6 +113,7 @@ image:build:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
+    - pacman -Syu --noconfirm podman
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
 
 image:build:secure:
@@ -128,6 +130,7 @@ image:build:secure:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
+    - pacman -Syu --noconfirm podman
     - podman login -u "$GITLAB_PROJECT_USER" -p "$GITLAB_PROJECT_TOKEN" "$CI_REGISTRY"
 
 # Build and publish to the Arch Linux group namespaces:
@@ -145,6 +148,7 @@ image:publish:secure:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
+    - pacman -Syu --noconfirm podman
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
     - podman login -u "$QUAY_USERNAME" -p "$QUAY_PASSWORD" "quay.io"
   script:
