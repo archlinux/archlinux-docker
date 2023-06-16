@@ -12,9 +12,9 @@ FROM quay.io/archlinux/archlinux:latest AS verify
 
 RUN pacman -Syu --noconfirm
 
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230616.0.158685
-RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4708/download")" && \
-    echo "d3d953be595f5bbddfad4b857332c4b5d8764849c5ed27668328b2bda2ad8fe7  base-20230616.0.158685.tar.zst" > /tmp/rootfs.tar.sha256 && \
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230616.0.158728
+RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4712/download")" && \
+    echo "f1ac91046a2e039b8381f5d92a5924798a6762acf08f1700c6caa0a1e7b263ac  base-20230616.0.158728.tar.zst" > /tmp/rootfs.tar.sha256 && \
     cat /tmp/rootfs.tar.sha256 && \
     sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
@@ -29,14 +29,14 @@ LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archl
 LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
 LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
-LABEL org.opencontainers.image.version="20230616.0.158685"
-LABEL org.opencontainers.image.revision="10fb4f9e4fd90bc05ac602a09d0e4aa1edc6011f"
-LABEL org.opencontainers.image.created="2023-06-16T09:07:16+00:00"
+LABEL org.opencontainers.image.version="20230616.0.158728"
+LABEL org.opencontainers.image.revision="d2ad02b01289f8df13b5a1472d7a27145c0becd4"
+LABEL org.opencontainers.image.created="2023-06-16T09:59:11+00:00"
 
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=20230616.0.158685' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20230616.0.158728' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
