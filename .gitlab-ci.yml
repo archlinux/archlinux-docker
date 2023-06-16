@@ -167,10 +167,10 @@ image:publish:secure:
     - podman push "quay.io/archlinux/archlinux:$GROUP"
     - podman push "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
     - if [[ "$GROUP" == "base" ]]; then
-        docker tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:latest";
-        docker tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:latest";
-        docker push "docker.io/archlinux/archlinux:latest";
-        docker push "quay.io/archlinux/archlinux:latest";
+        podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:latest";
+        podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:latest";
+        podman push "docker.io/archlinux/archlinux:latest";
+        podman push "quay.io/archlinux/archlinux:latest";
       fi
 
 
