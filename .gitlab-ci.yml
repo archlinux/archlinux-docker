@@ -14,6 +14,7 @@ cleanup:
   stage: cleanup
   tags:
     - secure
+    - docker
   only:
     refs:
       - schedules
@@ -30,8 +31,8 @@ cleanup:
 lint:
   stage: lint
   image: hadolint/hadolint:latest-alpine
-  # DL3018: We don't need alpine version pins
-  script: hadolint --ignore DL3018 Dockerfile.template
+  # DL3007: We don't need image version pins, we use the bleeding edge
+  script: hadolint --ignore DL3007 Dockerfile.template
   except:
     - releases
     - tags
@@ -79,6 +80,7 @@ rootfs:secure:
   extends: .rootfs
   tags:
     - secure
+    - docker
   only:
     - master
     - schedules
@@ -91,16 +93,16 @@ rootfs:secure:
 
 .image:
   stage: image
-  image:
-    name: gcr.io/kaniko-project/executor:v1.11.0-debug
-    entrypoint: [""]
+  tags:
+    - vm
+  before_script:
+    - pacman -Syu --noconfirm podman
   script:
-    - /kaniko/executor
-      --force
-      --ignore-var-run="false"
-      --context $CI_PROJECT_DIR/output
-      --dockerfile $CI_PROJECT_DIR/output/Dockerfile.$GROUP
-      --destination $CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG
+    - podman build
+        -f "$CI_PROJECT_DIR/output/Dockerfile.$GROUP"
+        -t "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG"
+        "$CI_PROJECT_DIR/output"
+    - podman push "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG"
 
 image:build:
   extends: .image
@@ -113,12 +115,14 @@ image:build:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - pacman -Syu --noconfirm podman
+    - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
 
 image:build:secure:
   extends: .image
   tags:
     - secure
+    - vm
   only:
     - master
     - schedules
@@ -128,7 +132,8 @@ image:build:secure:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$GITLAB_PROJECT_USER\",\"password\":\"$GITLAB_PROJECT_TOKEN\"}}}" > /kaniko/.docker/config.json
+    - pacman -Syu --noconfirm podman
+    - podman login -u "$GITLAB_PROJECT_USER" -p "$GITLAB_PROJECT_TOKEN" "$CI_REGISTRY"
 
 # Build and publish to the Arch Linux group namespaces:
 # https://hub.docker.com/r/archlinux/archlinux
@@ -138,28 +143,36 @@ image:publish:secure:
   retry: 2
   tags:
     - secure
+    - vm
   only:
     - tags
   parallel:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
-    - echo "{\"auths\":{\"https://index.docker.io/v1/\":{\"username\":\"$DOCKERHUB_USERNAME\",\"password\":\"$DOCKERHUB_ACCESS_TOKEN\"}, \"quay.io\":{\"username\":\"$QUAY_USERNAME\",\"password\":\"$QUAY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - pacman -Syu --noconfirm podman
+    - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
+    - podman login -u "$QUAY_USERNAME" -p "$QUAY_PASSWORD" "quay.io"
   script:
-    - LATEST=""
+    - podman build
+        -f "$CI_PROJECT_DIR/Dockerfile.$GROUP"
+        -t "archlinux:$GROUP-$BUILD_VERSION"
+        "$CI_PROJECT_DIR"
+    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:$GROUP"
+    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP"
+    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+    - podman push "docker.io/archlinux/archlinux:$GROUP"
+    - podman push "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+    - podman push "quay.io/archlinux/archlinux:$GROUP"
+    - podman push "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
     - if [[ "$GROUP" == "base" ]]; then
-        LATEST="--destination docker.io/archlinux/archlinux:latest --destination quay.io/archlinux/archlinux:latest";
+        docker tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:latest";
+        docker tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:latest";
+        docker push "docker.io/archlinux/archlinux:latest";
+        docker push "quay.io/archlinux/archlinux:latest";
       fi
-    - /kaniko/executor
-      --force
-      --ignore-var-run="false"
-      --context $CI_PROJECT_DIR
-      --dockerfile $CI_PROJECT_DIR/Dockerfile.$GROUP
-      --destination docker.io/archlinux/archlinux:$GROUP
-      --destination docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION
-      --destination quay.io/archlinux/archlinux:$GROUP
-      --destination quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION
-      $LATEST
+
 
 .test:
   stage: test
@@ -179,8 +192,8 @@ image:publish:secure:
   - test "$(cat /etc/passwd | wc -l)" -gt 10
   - pacman -Sy
   - pacman -Qqk
-  - pacman -Syu --noconfirm docker grep
-  - docker -v
+  - pacman -Syu --noconfirm podman grep
+  - podman -v
   - id -u http
   - locale | grep -q UTF-8
 
@@ -198,12 +211,15 @@ test:base-devel:
     - gcc -v
     - g++ -v
     - make -v
+    - test -u /usr/bin/sudo   # issue 70
+    - test -u /usr/bin/passwd
 
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   tags:
     - secure
+    - docker
   only:
     refs:
       - schedules
@@ -278,7 +294,7 @@ release:
       dotenv: build.env
 
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
-publish:
+publish-dockerhub:
   stage: publish
   only:
     refs:

@@ -8,12 +8,13 @@
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the release process.
 
-FROM alpine:3.18 AS verify
-RUN apk add --no-cache curl tar zstd
+FROM quay.io/archlinux/archlinux:latest AS verify
 
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230615.0.158283
-RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4680/download")" && \
-    echo "9760b0495b2a0d78412ff7615dcec87406d94137391d4e32d95944b29b916069  base-20230615.0.158283.tar.zst" > /tmp/rootfs.tar.sha256 && \
+RUN pacman -Syu --noconfirm
+
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230616.0.158685
+RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4708/download")" && \
+    echo "d3d953be595f5bbddfad4b857332c4b5d8764849c5ed27668328b2bda2ad8fe7  base-20230616.0.158685.tar.zst" > /tmp/rootfs.tar.sha256 && \
     cat /tmp/rootfs.tar.sha256 && \
     sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
@@ -28,14 +29,14 @@ LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archl
 LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
 LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
-LABEL org.opencontainers.image.version="20230615.0.158283"
-LABEL org.opencontainers.image.revision="0b819be950b9d66b7bdb7ea077fca9911dce2b37"
-LABEL org.opencontainers.image.created="2023-06-15T09:06:42+00:00"
+LABEL org.opencontainers.image.version="20230616.0.158685"
+LABEL org.opencontainers.image.revision="10fb4f9e4fd90bc05ac602a09d0e4aa1edc6011f"
+LABEL org.opencontainers.image.created="2023-06-16T09:07:16+00:00"
 
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=20230615.0.158283' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20230616.0.158685' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
