@@ -8,10 +8,12 @@
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the release process.
 
-FROM docker.io/archlinux/archlinux:base AS verify
+# Note: Only official DockerHub images are allowed, see https://github.com/docker-library/official-images/actions/runs/5321247374/jobs/9636110751?pr=14890#step:4:13
+# While we could use archlinux:base it could also break our build process, so we avoid dog fooding here
+FROM alpine:3.18 AS verify
 COPY TEMPLATE_ROOTFS_FILE /
 
-RUN pacman -Syu --noconfirm
+RUN apk add --no-cache curl tar zstd
 
 # TEMPLATE_ROOTFS_RELEASE_URL
 RUN TEMPLATE_ROOTFS_DOWNLOAD && \
