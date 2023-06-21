@@ -5,7 +5,8 @@
 Arch Linux provides OCI-Compliant container images in multiple repositories:
 * [Weekly in the official DockerHub library](https://hub.docker.com/_/archlinux): `podman pull docker.io/library/archlinux:latest` or `docker pull archlinux:latest`
 * [Daily in our DockerHub repository](https://hub.docker.com/r/archlinux/archlinux): `podman pull docker.io/archlinux/archlinux:latest` or `docker pull archlinux/archlinux:latest`
-* [Daily in our Quay.io repository](https://quay.io/repository/archlinux/archlinux): `podman pull quay.io/archlinux/archlinux:latest` or `docker pull quay.io/archlinux/archlinux:latest`
+* [Daily in our quay.io repository](https://quay.io/repository/archlinux/archlinux): `podman pull quay.io/archlinux/archlinux:latest` or `docker pull quay.io/archlinux/archlinux:latest`
+* [Daily in our ghcr.io repository](https://github.com/archlinux/archlinux-docker/pkgs/container/archlinux): `podman pull ghcr.io/archlinux/archlinux:latest` or `docker pull ghcr.io/archlinux/archlinux:latest`
 
 Two versions of the image are provided: `base` (approx. 150 MiB) and `base-devel` (approx. 260 MiB), containing the respective meta package / package group. Both are available as tags with `latest` pointing to `base`. Additionally, images are tagged with their date and build job number, f.e. `base-devel-20201118.0.9436`.
 
