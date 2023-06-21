@@ -153,6 +153,7 @@ image:publish:secure:
     - pacman -Syu --noconfirm podman
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
     - podman login -u "$QUAY_USERNAME" -p "$QUAY_PASSWORD" "quay.io"
+    - podman login -u "$GHCR_USERNAME" -p "$GHCR_PASSWORD" "ghcr.io"
   script:
     - podman build
         -f "$CI_PROJECT_DIR/Dockerfile.$GROUP"
@@ -162,15 +163,21 @@ image:publish:secure:
     - podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
     - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP"
     - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:$GROUP"
+    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
     - podman push "docker.io/archlinux/archlinux:$GROUP"
     - podman push "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
     - podman push "quay.io/archlinux/archlinux:$GROUP"
     - podman push "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+    - podman push "ghcr.io/archlinux/archlinux:$GROUP"
+    - podman push "ghcr.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
     - if [[ "$GROUP" == "base" ]]; then
         podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:latest";
         podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:latest";
+        podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:latest";
         podman push "docker.io/archlinux/archlinux:latest";
         podman push "quay.io/archlinux/archlinux:latest";
+        podman push "ghcr.io/archlinux/archlinux:latest";
       fi
 
 
