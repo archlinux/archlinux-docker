@@ -21,6 +21,13 @@ While the images are regularly kept up to date it is strongly recommended
 running `pacman -Syu` right after starting a container due to the rolling
 release nature of Arch Linux.
 
+All the images, with the exception of the official DockerHub library image, are signed by using [cosign's keyless signing](https://docs.sigstore.dev/cosign/openid_signing/). The images can be verified with one of the following commands:
+```
+$ cosign verify docker.io/archlinux/archlinux:latest --certificate-identity=https://gitlab.com/archlinux/archlinux-docker@refs/heads/master --certificate-oidc-issuer=https://gitlab.archlinux.org | jq .
+$ cosign verify quay.io/archlinux/archlinux:latest --certificate-identity=https://gitlab.com/archlinux/archlinux-docker@refs/heads/master --certificate-oidc-issuer=https://gitlab.archlinux.org | jq .
+$ cosign verify ghcr.io/archlinux/archlinux:latest --certificate-identity=https://gitlab.com/archlinux/archlinux-docker@refs/heads/master --certificate-oidc-issuer=https://gitlab.archlinux.org | jq .
+```
+
 ## Principles
 * Provide the Arch experience in a Docker image
 * Provide the simplest but complete image to `base` and `base-devel` on a regular basis
