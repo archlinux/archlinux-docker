@@ -8,15 +8,15 @@
 # Some templating is done in order to allow us to easily build different configurations and to
 # allow us to automate the release process.
 
-# Note: Only official DockerHub images are allowed, see https://github.com/docker-library/official-images/actions/runs/5321247374/jobs/9636110751?pr=14890#step:4:13
+# Note: Only official DockerHub images are allowed, see https://gitlab.archlinux.org/archlinux/archlinux-docker/-/commit/daa67d18579024947d69a45e6d028c5adb1c8c23
 # While we could use archlinux:base it could also break our build process, so we avoid dog fooding here
 FROM alpine:3.18 AS verify
 
 RUN apk add --no-cache curl tar zstd
 
-# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230625.0.160437
-RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4772/download")" && \
-    echo "20ab20698d77ded749dcbd3a1bf0b721ea83d0d4f5da2b6d35e269b9c355b661  base-20230625.0.160437.tar.zst" > /tmp/rootfs.tar.sha256 && \
+# https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v20230627.0.160790
+RUN ROOTFS="$(curl -sOJL -w "%{filename_effective}" "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/4776/download")" && \
+    echo "27c768d18312a96a8f5bb83b50b14252b2d1ee907810cd55c3447292e73bf715  base-20230627.0.160790.tar.zst" > /tmp/rootfs.tar.sha256 && \
     cat /tmp/rootfs.tar.sha256 && \
     sha256sum -c /tmp/rootfs.tar.sha256 && \
     mkdir /rootfs && \
@@ -31,14 +31,14 @@ LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archl
 LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
 LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
-LABEL org.opencontainers.image.version="20230625.0.160437"
-LABEL org.opencontainers.image.revision="e4875c7e3688c1c0863f1e70cdea9da73d03cbcd"
-LABEL org.opencontainers.image.created="2023-06-25T09:07:06+00:00"
+LABEL org.opencontainers.image.version="20230627.0.160790"
+LABEL org.opencontainers.image.revision="301942f9e5995770cb5e4dedb4fe9166afa4806d"
+LABEL org.opencontainers.image.created="2023-06-27T09:07:51+00:00"
 
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=20230625.0.160437' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20230627.0.160790' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
