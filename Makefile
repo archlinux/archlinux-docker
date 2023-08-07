@@ -66,10 +66,10 @@ $(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.zst
 
 # The following is for local builds only, it is not used by the CI/CD pipeline
 
-.PHONY: oci-image-base
+.PHONY: image-base
 image-base: $(OUTPUTDIR)/Dockerfile.base
 	${OCITOOL} build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
 
-.PHONY: oci-image-base-devel
+.PHONY: image-base-devel
 image-base-devel: $(OUTPUTDIR)/Dockerfile.base-devel
 	${OCITOOL} build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)

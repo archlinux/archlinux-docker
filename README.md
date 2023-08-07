@@ -43,9 +43,9 @@ Install the following Arch Linux packages:
 Make sure your user can directly interact with Podman (i.e. `podman info` works).
 
 ### Usage
-Run `make oci-image-base` to build the `archlinux:base` image with the
-`base` meta package installed. You can also run `make oci-image-base-devel` to
-build the image `archlinux:base-devel` which additionally has the `base-devel` group installed.
+Run `make image-base` to build the `archlinux:base` image with the `base` meta
+package installed. You can also run `make image-base-devel` to build the image
+`archlinux:base-devel` which additionally has the `base-devel` group installed.
 
 ## Pipeline
 
