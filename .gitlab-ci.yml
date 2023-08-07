@@ -59,7 +59,8 @@ get_version:
 .rootfs:
   stage: rootfs
   before_script:
-    - pacman -Syu --noconfirm make devtools fakechroot fakeroot
+    - pacman -Syu --noconfirm make fakechroot fakeroot
+    - pacman -Sdd --noconfirm devtools
   script:
     - make $PWD/output/Dockerfile.$GROUP
   artifacts:
