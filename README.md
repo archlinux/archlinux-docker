@@ -36,7 +36,7 @@ Install the following Arch Linux packages:
 
 * make
 * devtools
-* docker
+* podman
 * fakechroot
 * fakeroot
 
