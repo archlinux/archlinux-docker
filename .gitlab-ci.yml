@@ -58,6 +58,9 @@ get_version:
 
 .rootfs:
   stage: rootfs
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   before_script:
     - pacman -Syu --noconfirm make fakechroot fakeroot
     - pacman -Sdd --noconfirm devtools
@@ -75,9 +78,6 @@ rootfs:
     - releases
     - schedules
     - tags
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
 
 rootfs:secure:
   extends: .rootfs
@@ -90,12 +90,12 @@ rootfs:secure:
   except:
     - tags
     - releases
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
 
 .image:
   stage: image
+  parallel:
+    matrix:
+      - GROUP: [base, base-devel]
   tags:
     - vm
   before_script:
@@ -114,9 +114,6 @@ image:build:
     - releases
     - schedules
     - tags
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
@@ -131,9 +128,6 @@ image:build:secure:
     - schedules
   except:
     - tags
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$GITLAB_PROJECT_USER" -p "$GITLAB_PROJECT_TOKEN" "$CI_REGISTRY"
@@ -149,9 +143,6 @@ image:publish:secure:
     - vm
   only:
     - tags
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
