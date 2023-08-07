@@ -10,9 +10,11 @@ define rootfs
 	install -Dm644 /usr/share/devtools/pacman.conf.d/extra.conf $(BUILDDIR)/etc/pacman.conf
 	cat pacman-conf.d-noextract.conf >> $(BUILDDIR)/etc/pacman.conf
 
+	sed 's/Include = /&rootfs/g' < $(BUILDDIR)/etc/pacman.conf > pacman.conf
+
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
 		--noconfirm --dbpath $(BUILDDIR)/var/lib/pacman \
-		--config $(BUILDDIR)/etc/pacman.conf \
+		--config pacman.conf \
 		--noscriptlet \
 		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
 
