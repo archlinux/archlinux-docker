@@ -37,6 +37,8 @@ lint:
     - releases
     - tags
 
+# This is an implicit gitlab stage, with the build.env variables used by either
+# other stages or auxiliarry scripts.
 get_version:
   stage: .pre
   script:
