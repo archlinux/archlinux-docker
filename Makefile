@@ -10,9 +10,11 @@ define rootfs
 	install -Dm644 /usr/share/devtools/pacman.conf.d/extra.conf $(BUILDDIR)/etc/pacman.conf
 	cat pacman-conf.d-noextract.conf >> $(BUILDDIR)/etc/pacman.conf
 
+	sed 's/Include = /&rootfs/g' < $(BUILDDIR)/etc/pacman.conf > pacman.conf
+
 	fakechroot -- fakeroot -- pacman -Sy -r $(BUILDDIR) \
 		--noconfirm --dbpath $(BUILDDIR)/var/lib/pacman \
-		--config $(BUILDDIR)/etc/pacman.conf \
+		--config pacman.conf \
 		--noscriptlet \
 		--hookdir $(BUILDDIR)/alpm-hooks/usr/share/libalpm/hooks/ $(2)
 
@@ -66,10 +68,10 @@ $(OUTPUTDIR)/Dockerfile.base-devel: $(OUTPUTDIR)/base-devel.tar.zst
 
 # The following is for local builds only, it is not used by the CI/CD pipeline
 
-.PHONY: oci-image-base
+.PHONY: image-base
 image-base: $(OUTPUTDIR)/Dockerfile.base
 	${OCITOOL} build -f $(OUTPUTDIR)/Dockerfile.base -t archlinux/archlinux:base $(OUTPUTDIR)
 
-.PHONY: oci-image-base-devel
+.PHONY: image-base-devel
 image-base-devel: $(OUTPUTDIR)/Dockerfile.base-devel
 	${OCITOOL} build -f $(OUTPUTDIR)/Dockerfile.base-devel -t archlinux/archlinux:base-devel $(OUTPUTDIR)
