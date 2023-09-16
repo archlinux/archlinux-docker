@@ -1,0 +1,6 @@
+fulcio:
+  fulcioURL: "https://fulcio.sigstore.dev"
+  oidcMode: "staticToken"
+  oidcIssuerURL: "https://gitlab.archlinux.org"
+  oidcIDToken: "TEMPLATE_OIDC_ID_TOKEN"
+rekorURL: "https://rekor.sigstore.dev"
