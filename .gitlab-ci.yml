@@ -278,6 +278,9 @@ release:
       --form "actions[][action]=update"
       --form "actions[][file_path]=.gitlab-ci.yml"
       --form "actions[][content]=<.gitlab-ci.yml"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=sigstore-param-file.yaml"
+      --form "actions[][content]=<sigstore-param-file.yaml"
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
     - echo "BUILD_COMMIT=$(jq -r '.id' commit-response.json)" >> build.env
     - |
