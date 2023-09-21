@@ -161,26 +161,18 @@ image:publish:secure:
         -f "$CI_PROJECT_DIR/Dockerfile.$GROUP"
         -t "archlinux:$GROUP-$BUILD_VERSION"
         "$CI_PROJECT_DIR"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:$GROUP"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:$GROUP"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman push "docker.io/archlinux/archlinux:$GROUP"
-    - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman push "quay.io/archlinux/archlinux:$GROUP"
-    - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman push "ghcr.io/archlinux/archlinux:$GROUP"
-    - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "ghcr.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - if [[ "$GROUP" == "base" ]]; then
-        podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:latest";
-        podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:latest";
-        podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:latest";
-        podman push "docker.io/archlinux/archlinux:latest";
-        podman push "quay.io/archlinux/archlinux:latest";
-        podman push "ghcr.io/archlinux/archlinux:latest";
-      fi
+    - |
+      for host in "docker.io" "quay.io" "ghcr.io"; do
+        podman tag "archlinux:$GROUP-$BUILD_VERSION" "$host/archlinux/archlinux:$GROUP"
+        podman tag "archlinux:$GROUP-$BUILD_VERSION" "$host/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+        podman push "$host/archlinux/archlinux:$GROUP"
+        podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "$host/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+
+        if [[ "$GROUP" == "base" ]]; then
+          podman tag "archlinux:$GROUP-$BUILD_VERSION" "$host/archlinux/archlinux:latest"
+          podman push "$host/archlinux/archlinux:latest"
+        fi
+      done
 
 
 .test:
