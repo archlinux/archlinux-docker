@@ -159,6 +159,7 @@ image:publish:secure:
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
     - podman login -u "$QUAY_USERNAME" -p "$QUAY_PASSWORD" "quay.io"
     - podman login -u "$GHCR_USERNAME" -p "$GHCR_PASSWORD" "ghcr.io"
+    - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
   script:
     - podman build
         -f "$CI_PROJECT_DIR/Dockerfile.$GROUP"
