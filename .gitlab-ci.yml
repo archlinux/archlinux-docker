@@ -80,9 +80,6 @@ rootfs:
     - releases@archlinux/archlinux-docker
     - schedules@archlinux/archlinux-docker
     - tags@archlinux/archlinux-docker
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
 
 rootfs:secure:
   extends: .rootfs
@@ -153,9 +150,6 @@ image:publish:secure:
     - vm
   only:
     - tags@archlinux/archlinux-docker
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
