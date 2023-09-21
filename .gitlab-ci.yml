@@ -60,7 +60,7 @@ get_version:
   stage: rootfs
   parallel:
     matrix:
-      - GROUP: [base, base-devel]
+      - GROUP: [base, base-devel, multilib-devel]
   before_script:
     - pacman -Syu --noconfirm git make fakechroot fakeroot
     - pacman -Sdd --noconfirm devtools
@@ -97,7 +97,7 @@ rootfs:secure:
   stage: image
   parallel:
     matrix:
-      - GROUP: [base, base-devel]
+      - GROUP: [base, base-devel, multilib-devel]
   tags:
     - vm
   before_script:
