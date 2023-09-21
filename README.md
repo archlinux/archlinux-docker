@@ -25,9 +25,9 @@ All the images, with the exception of the official DockerHub library image, are
 signed by using [cosign's keyless signing][openid-signing]. The images can be
 verified with one of the following commands:
 ```sh
-$ cosign verify docker.io/archlinux/archlinux:latest --certificate-identity=https://gitlab.com/archlinux/archlinux-docker@refs/heads/master --certificate-oidc-issuer=https://gitlab.archlinux.org | jq .
-$ cosign verify quay.io/archlinux/archlinux:latest --certificate-identity=https://gitlab.com/archlinux/archlinux-docker@refs/heads/master --certificate-oidc-issuer=https://gitlab.archlinux.org | jq .
-$ cosign verify ghcr.io/archlinux/archlinux:latest --certificate-identity=https://gitlab.com/archlinux/archlinux-docker@refs/heads/master --certificate-oidc-issuer=https://gitlab.archlinux.org | jq .
+$ cosign verify docker.io/archlinux/archlinux:latest --certificate-identity-regexp="https://gitlab\.archlinux\.org/archlinux/archlinux-docker//\.gitlab-ci\.yml@refs/tags/v[0-9]+\.0\.[0-9]+" --certificate-oidc-issuer=https://gitlab.archlinux.org
+$ cosign verify quay.io/archlinux/archlinux:latest --certificate-identity-regexp="https://gitlab\.archlinux\.org/archlinux/archlinux-docker//\.gitlab-ci\.yml@refs/tags/v[0-9]+\.0\.[0-9]+" --certificate-oidc-issuer=https://gitlab.archlinux.org
+$ cosign verify ghcr.io/archlinux/archlinux:latest --certificate-identity-regexp="https://gitlab\.archlinux\.org/archlinux/archlinux-docker//\.gitlab-ci\.yml@refs/tags/v[0-9]+\.0\.[0-9]+" --certificate-oidc-issuer=https://gitlab.archlinux.org
 ```
 
 ## Principles
