@@ -237,7 +237,7 @@ release:
       http --ignore-stdin PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ Authorization:"JWT ${TOKEN}" full_description="$(cat README.md)"
 
       # Upload rootfs to the Generic Packages Repository
-      for group in base base-devel; do
+      for group in base base-devel multilib-devel; do
         sed -i "s|${group}.tar.zst|${group}-${BUILD_VERSION}.tar.zst|" output/${group}.tar.zst.SHA256
         echo "Uploading ${group}.tar.zst"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst
@@ -260,6 +260,9 @@ release:
       --form "actions[][file_path]=Dockerfile.base-devel"
       --form "actions[][content]=<output/Dockerfile.base-devel"
       --form "actions[][action]=update"
+      --form "actions[][file_path]=Dockerfile.multilib-devel"
+      --form "actions[][content]=<output/Dockerfile.multilib-devel"
+      --form "actions[][action]=update"
       --form "actions[][file_path]=.gitlab-ci.yml"
       --form "actions[][content]=<.gitlab-ci.yml"
       --form "actions[][action]=update"
@@ -277,6 +280,11 @@ release:
       base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.zst.SHA256)
       echo "${base_devel_sha_url}"
 
+      multilib_devel_url=$(./ci/get-public-download-for-generic-package.sh multilib-devel-${BUILD_VERSION}.tar.zst)
+      echo "${multilib_devel_url}"
+      multilib_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh multilib-devel-${BUILD_VERSION}.tar.zst.SHA256)
+      echo "${multilib_devel_sha_url}"
+
       # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst\"
       # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       echo "Creating release"
@@ -288,6 +296,8 @@ release:
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_sha_url}\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${base_devel_url}\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_devel_sha_url}\"}"
+      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${multilib_devel_url}\"}" \
+      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${multilib_devel_sha_url}\"}"
   artifacts:
     reports:
       dotenv: build.env
