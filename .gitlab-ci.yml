@@ -69,6 +69,8 @@ get_version:
   artifacts:
     paths:
       - output/*
+    exclude:
+      - output/*.tar
     expire_in: 2h
 
 rootfs:
