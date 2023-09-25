@@ -6,7 +6,6 @@ declare -r GROUP="$1"
 declare -r OUTPUTDIR="$2"
 
 sed -e "s|TEMPLATE_ROOTFS_FILE|$GROUP.tar.zst|" \
-    -e "s|TEMPLATE_ROOTFS_RELEASE_URL|Local build|" \
     -e "s|TEMPLATE_ROOTFS_DOWNLOAD|true|" \
     -e "s|TEMPLATE_ROOTFS_HASH|$(cat $OUTPUTDIR/$GROUP.tar.zst.SHA256)|" \
     -e "s|TEMPLATE_TITLE|Arch Linux Dev Image|" \

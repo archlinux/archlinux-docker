@@ -246,7 +246,6 @@ release:
         sed "/COPY TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_FILE|${group}.tar.zst|" output/Dockerfile.${group}
         package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.zst)
-        sed -i "s|TEMPLATE_ROOTFS_RELEASE_URL|https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v${BUILD_VERSION}|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_DOWNLOAD|curl -sOJL \"${package_url}\"|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.zst.SHA256)|" output/Dockerfile.${group}
         sed -i "s|TEMPLATE_TITLE|Arch Linux ${group} Image|" output/Dockerfile.${group}
