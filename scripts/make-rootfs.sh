@@ -30,8 +30,6 @@ $WRAPPER -- chroot "$BUILDDIR" update-ca-trust
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --init
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --populate
 
-rm -rf "$BUILDDIR/etc/pacman.d/gnupg/{openpgp-revocs.d/,private-keys-v1.d/,pubring.gpg~,gnupg.S.}*"
-
 ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
 
 # add system users
