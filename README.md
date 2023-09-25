@@ -54,7 +54,8 @@ image for Arch Linux.
 Install the following Arch Linux packages:
 
 * make
-* devtools
+* devtools (for the pacman.conf files)
+* git (to fetch the commit/revision number)
 * podman
 * fakechroot
 * fakeroot
