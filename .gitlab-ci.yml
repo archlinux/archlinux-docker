@@ -317,7 +317,16 @@ publish-dockerhub:
     - git reset --hard FETCH_HEAD
     - head="release/${BUILD_VERSION}"
     - git checkout -b "$head"
-    - envsubst < ../docker-library.template > library/archlinux
+    - cp ../docker-library.template library/archlinux
+    - |
+      for group in base base-devel; do
+        test "${group}" = "base" && extra="latest, " || extra=""
+        echo "Tags: ${extra}${group}, ${group}-${BUILD_VERSION}" >> library/archlinux
+        echo "GitCommit: ${BUILD_COMMIT}" >> library/archlinux
+        echo "GitFetch: refs/tags/v${BUILD_VERSION}" >> library/archlinux
+        echo "File: Dockerfile.${group}" >> library/archlinux
+        echo >> library/archlinux
+      done
     - git diff
     - git add library/archlinux
     - maintainers="$(grep \(@ ../docker-library.template | cut -d\( -f2 | cut -d\) -f1 | xargs)"
