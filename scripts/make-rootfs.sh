@@ -17,6 +17,9 @@ cat pacman-conf.d-noextract.conf >> "$BUILDDIR/etc/pacman.conf"
 
 sed 's/Include = /&rootfs/g' < "$BUILDDIR/etc/pacman.conf" > pacman.conf
 
+cp --recursive --preserve=timestamps rootfs/* "$BUILDDIR/"
+ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
+
 $WRAPPER -- \
     pacman -Sy -r "$BUILDDIR" \
         --noconfirm --dbpath "$BUILDDIR/var/lib/pacman" \
@@ -24,13 +27,9 @@ $WRAPPER -- \
         --noscriptlet \
         --hookdir "$BUILDDIR/alpm-hooks/usr/share/libalpm/hooks/" base "$GROUP"
 
-cp --recursive --preserve=timestamps rootfs/* "$BUILDDIR/"
-
 $WRAPPER -- chroot "$BUILDDIR" update-ca-trust
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --init
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --populate
-
-ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
 
 # add system users
 $WRAPPER -- chroot "$BUILDDIR" /usr/bin/systemd-sysusers --root "/"
