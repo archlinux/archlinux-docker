@@ -17,9 +17,8 @@ RUN apk add --no-cache curl tar zstd
 
 # TEMPLATE_ROOTFS_RELEASE_URL
 RUN TEMPLATE_ROOTFS_DOWNLOAD && \
-    echo "TEMPLATE_ROOTFS_HASH" > /tmp/rootfs.tar.sha256 && \
-    cat /tmp/rootfs.tar.sha256 && \
-    sha256sum -c /tmp/rootfs.tar.sha256 && \
+    echo "TEMPLATE_ROOTFS_HASH" > /tmp/sha256sums.txt && \
+    sha256sum -c /tmp/sha256sums.txt && \
     mkdir /rootfs && \
     tar -C /rootfs --extract --file "${ROOTFS}"
 
