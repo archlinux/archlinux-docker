@@ -62,7 +62,7 @@ get_version:
     matrix:
       - GROUP: [base, base-devel]
   before_script:
-    - pacman -Syu --noconfirm make fakechroot fakeroot
+    - pacman -Syu --noconfirm git make fakechroot fakeroot
     - pacman -Sdd --noconfirm devtools
   script:
     - make $PWD/output/Dockerfile.$GROUP
