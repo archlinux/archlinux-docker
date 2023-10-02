@@ -243,15 +243,9 @@ release:
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst
         echo "Uploading ${group}.tar.zst.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst.SHA256
-        sed "/COPY TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_ROOTFS_FILE|${group}.tar.zst|" output/Dockerfile.${group}
         package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.zst)
-        sed -i "s|TEMPLATE_ROOTFS_DOWNLOAD|curl -sOJL \"${package_url}\"|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.zst.SHA256)|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_TITLE|Arch Linux ${group} Image|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_VERSION_ID|${BUILD_VERSION}|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_REVISION|${CI_COMMIT_SHA}|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_CREATED|$(date -Is)|" output/Dockerfile.${group}
+        scripts/make-dockerfile.sh "${group}" "output" "curl -sOJL \"${package_url}\"" "${group}"
+        sed -i "/^COPY ${group}.tar.zst \/$/d" output/Dockerfile.${group}
       done
     - >
       curl -sSf --request POST -o commit-response.json
