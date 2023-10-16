@@ -5,13 +5,3 @@ Maintainers: Santiago Torres-Arias <santiago@archlinux.org> (@SantiagoTorres),
              Justin Kromlinger <hashworks@archlinux.org> (@hashworks)
 GitRepo: https://gitlab.archlinux.org/archlinux/archlinux-docker.git
 
-Tags: latest, base, base-${BUILD_VERSION}
-GitCommit: ${BUILD_COMMIT}
-GitFetch: refs/tags/v${BUILD_VERSION}
-File: Dockerfile.base
-
-Tags: base-devel, base-devel-${BUILD_VERSION}
-GitCommit: ${BUILD_COMMIT}
-GitFetch: refs/tags/v${BUILD_VERSION}
-File: Dockerfile.base-devel
-

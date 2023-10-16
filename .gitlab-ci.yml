@@ -80,9 +80,6 @@ rootfs:
     - releases@archlinux/archlinux-docker
     - schedules@archlinux/archlinux-docker
     - tags@archlinux/archlinux-docker
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
 
 rootfs:secure:
   extends: .rootfs
@@ -153,9 +150,6 @@ image:publish:secure:
     - vm
   only:
     - tags@archlinux/archlinux-docker
-  parallel:
-    matrix:
-      - GROUP: [base, base-devel]
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
@@ -167,26 +161,18 @@ image:publish:secure:
         -f "$CI_PROJECT_DIR/Dockerfile.$GROUP"
         -t "archlinux:$GROUP-$BUILD_VERSION"
         "$CI_PROJECT_DIR"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:$GROUP"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:$GROUP"
-    - podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman push "docker.io/archlinux/archlinux:$GROUP"
-    - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "docker.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman push "quay.io/archlinux/archlinux:$GROUP"
-    - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "quay.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - podman push "ghcr.io/archlinux/archlinux:$GROUP"
-    - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "ghcr.io/archlinux/archlinux:$GROUP-$BUILD_VERSION"
-    - if [[ "$GROUP" == "base" ]]; then
-        podman tag "archlinux:$GROUP-$BUILD_VERSION" "docker.io/archlinux/archlinux:latest";
-        podman tag "archlinux:$GROUP-$BUILD_VERSION" "quay.io/archlinux/archlinux:latest";
-        podman tag "archlinux:$GROUP-$BUILD_VERSION" "ghcr.io/archlinux/archlinux:latest";
-        podman push "docker.io/archlinux/archlinux:latest";
-        podman push "quay.io/archlinux/archlinux:latest";
-        podman push "ghcr.io/archlinux/archlinux:latest";
-      fi
+    - |
+      for host in "docker.io" "quay.io" "ghcr.io"; do
+        podman tag "archlinux:$GROUP-$BUILD_VERSION" "$host/archlinux/archlinux:$GROUP"
+        podman tag "archlinux:$GROUP-$BUILD_VERSION" "$host/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+        podman push "$host/archlinux/archlinux:$GROUP"
+        podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "$host/archlinux/archlinux:$GROUP-$BUILD_VERSION"
+
+        if [[ "$GROUP" == "base" ]]; then
+          podman tag "archlinux:$GROUP-$BUILD_VERSION" "$host/archlinux/archlinux:latest"
+          podman push "$host/archlinux/archlinux:latest"
+        fi
+      done
 
 
 .test:
@@ -257,15 +243,9 @@ release:
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst
         echo "Uploading ${group}.tar.zst.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst.SHA256
-        sed "/TEMPLATE_ROOTFS_FILE/d" Dockerfile.template > output/Dockerfile.${group}
         package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.zst)
-        sed -i "s|TEMPLATE_ROOTFS_RELEASE_URL|https://gitlab.archlinux.org/archlinux/archlinux-docker/-/releases/v${BUILD_VERSION}|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_ROOTFS_DOWNLOAD|ROOTFS=\"\$(curl -sOJL -w \"%{filename_effective}\" \"${package_url}\")\"|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_ROOTFS_HASH|$(cat output/${group}.tar.zst.SHA256)|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_TITLE|Arch Linux ${group} Image|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_VERSION_ID|${BUILD_VERSION}|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_REVISION|${CI_COMMIT_SHA}|" output/Dockerfile.${group}
-        sed -i "s|TEMPLATE_CREATED|$(date -Is)|" output/Dockerfile.${group}
+        scripts/make-dockerfile.sh "${group}" "output" "curl -sOJL \"${package_url}\"" "${group}"
+        sed -i "/^COPY ${group}.tar.zst \/$/d" output/Dockerfile.${group}
       done
     - >
       curl -sSf --request POST -o commit-response.json
@@ -337,7 +317,16 @@ publish-dockerhub:
     - git reset --hard FETCH_HEAD
     - head="release/${BUILD_VERSION}"
     - git checkout -b "$head"
-    - envsubst < ../docker-library.template > library/archlinux
+    - cp ../docker-library.template library/archlinux
+    - |
+      for group in base base-devel; do
+        test "${group}" = "base" && extra="latest, " || extra=""
+        echo "Tags: ${extra}${group}, ${group}-${BUILD_VERSION}" >> library/archlinux
+        echo "GitCommit: ${BUILD_COMMIT}" >> library/archlinux
+        echo "GitFetch: refs/tags/v${BUILD_VERSION}" >> library/archlinux
+        echo "File: Dockerfile.${group}" >> library/archlinux
+        echo >> library/archlinux
+      done
     - git diff
     - git add library/archlinux
     - maintainers="$(grep \(@ ../docker-library.template | cut -d\( -f2 | cut -d\) -f1 | xargs)"
