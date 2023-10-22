@@ -298,6 +298,9 @@ release:
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
 publish-dockerhub:
   stage: publish
+  dependencies:
+    - get_version
+    - release
   only:
     refs:
       - schedules
