@@ -7,6 +7,7 @@ stages:
   - rootfs
   - image
   - test
+  - pre-release
   - release
   - publish
 
@@ -208,8 +209,8 @@ test:base-devel:
     - test -u /usr/bin/sudo   # issue 70
     - test -u /usr/bin/passwd
 
-release:
-  stage: release
+pre-release:
+  stage: pre-release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   tags:
     - secure
@@ -219,16 +220,11 @@ release:
       - schedules@archlinux/archlinux-docker
     variables:
       - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
-      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - apk update
-    - apk add jq curl httpie bash
+    - apk add jq curl bash
   script:
     - |
-      # Update the description on https://hub.docker.com/r/archlinux/archlinux
-      TOKEN="$(http --ignore-stdin POST https://hub.docker.com/v2/users/login username="${DOCKERHUB_USERNAME}" password="${DOCKERHUB_PASSWORD}" | jq -er .token)"
-      http --ignore-stdin PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ Authorization:"JWT ${TOKEN}" full_description="$(cat README.md)"
-
       # Upload rootfs to the Generic Packages Repository
       for group in base base-devel multilib-devel; do
         rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
@@ -239,6 +235,11 @@ release:
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}" "${PACKAGE_REGISTRY_URL}/"
         echo "Uploading ${rootfs_file}.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}.SHA256" "${PACKAGE_REGISTRY_URL}/"
+      done
+
+      # Create the Dockerfiles, commit to the release branch
+      for group in base base-devel multilib-devel; do
+        rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
         ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}"
         sed -i "/^COPY ${rootfs_file} \/$/d" output/Dockerfile.${group}
       done
@@ -264,21 +265,44 @@ release:
       --form "actions[][content]=<sigstore-param-file.yaml"
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
     - echo "BUILD_COMMIT=$(jq -r '.id' commit-response.json)" >> build.env
-    - |
-      echo "Creating release"
-      release-cli --private-token "${GITLAB_PROJECT_TOKEN}" create \
-      --name "Release ${BUILD_VERSION}" \
-      --description "Release ${BUILD_VERSION}" \
-      --tag-name v${BUILD_VERSION} --ref "releases" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst\"}" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst.SHA256\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.zst\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.zst.SHA256\"}" \
-      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst\"}" \
-      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${PACKAGE_REGISTRY_URL}/multilib-devel${BUILD_VERSION}.tar.zst.SHA256\"}"
   artifacts:
     reports:
       dotenv: build.env
+
+release:
+  stage: release
+  dependencies:
+    - get_version
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  tags:
+    - secure
+    - docker
+  only:
+    refs:
+      - schedules@archlinux/archlinux-docker
+    variables:
+      - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
+  script:
+    - echo 'Creating release'
+  release:
+    name: 'Release ${BUILD_VERSION}'
+    description: 'Release ${BUILD_VERSION}'
+    tag_name: 'v${BUILD_VERSION}'
+    ref: 'releases'
+    assets:
+      links:
+        - name: 'base-${BUILD_VERSION}.tar.zst'
+          url: '${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst'
+        - name: 'base-${BUILD_VERSION}.tar.zst.SHA256'
+          url: '${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst.SHA256'
+        - name: 'base-devel-${BUILD_VERSION}.tar.zst'
+          url: '${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.zst'
+        - name: 'base-devel-${BUILD_VERSION}.tar.zst.SHA256'
+          url: '${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.zst.SHA256'
+        - name: 'multilib-devel-${BUILD_VERSION}.tar.zst'
+          url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst'
+        - name: 'multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
+          url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
 
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
 publish-dockerhub:
@@ -297,10 +321,14 @@ publish-dockerhub:
     - test -n "$BUILD_VERSION"
     - test -n "$BUILD_COMMIT"
     - test -n "$GITHUB_TOKEN"
-    - pacman -Syu --noconfirm github-cli git gettext
+    - pacman -Syu --noconfirm jq httpie github-cli git gettext
     - git config --global user.email "github@archlinux.org"
     - git config --global user.name "Arch Linux Technical User"
   script:
+    - echo "Update the description on https://hub.docker.com/r/archlinux/archlinux"
+    - TOKEN="$(http --ignore-stdin POST https://hub.docker.com/v2/users/login username="${DOCKERHUB_USERNAME}" password="${DOCKERHUB_PASSWORD}" | jq -er .token)"
+    - http --ignore-stdin PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ Authorization:"JWT ${TOKEN}" full_description="$(cat README.md)"
+    - echo "Update the Docker library Github repo"
     - mkdir official-images
     - cd official-images
     - git init
