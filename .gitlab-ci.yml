@@ -239,8 +239,7 @@ release:
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}" "${PACKAGE_REGISTRY_URL}/"
         echo "Uploading ${rootfs_file}.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}.SHA256" "${PACKAGE_REGISTRY_URL}/"
-        package_url=$(./ci/get-public-download-for-generic-package.sh ${rootfs_file})
-        ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${package_url}\"" "${group}"
+        ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}"
         sed -i "/^COPY ${rootfs_file} \/$/d" output/Dockerfile.${group}
       done
     - >
@@ -266,33 +265,17 @@ release:
       "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/repository/commits"
     - echo "BUILD_COMMIT=$(jq -r '.id' commit-response.json)" >> build.env
     - |
-      base_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.zst)
-      echo "${base_url}"
-      base_sha_url=$(./ci/get-public-download-for-generic-package.sh base-${BUILD_VERSION}.tar.zst.SHA256)
-      echo "${base_sha_url}"
-      base_devel_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.zst)
-      echo "${base_devel_url}"
-      base_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh base-devel-${BUILD_VERSION}.tar.zst.SHA256)
-      echo "${base_devel_sha_url}"
-
-      multilib_devel_url=$(./ci/get-public-download-for-generic-package.sh multilib-devel-${BUILD_VERSION}.tar.zst)
-      echo "${multilib_devel_url}"
-      multilib_devel_sha_url=$(./ci/get-public-download-for-generic-package.sh multilib-devel-${BUILD_VERSION}.tar.zst.SHA256)
-      echo "${multilib_devel_sha_url}"
-
-      # TODO: We should actually be able to do something like \"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst\"
-      # But it doesn't appear that those downloads are public. I consider this a bug and hopefully it's fixed in a future version!
       echo "Creating release"
       release-cli --private-token "${GITLAB_PROJECT_TOKEN}" create \
       --name "Release ${BUILD_VERSION}" \
       --description "Release ${BUILD_VERSION}" \
       --tag-name v${BUILD_VERSION} --ref "releases" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst\",\"url\":\"${base_url}\"}" \
-      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_sha_url}\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${base_devel_url}\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_devel_sha_url}\"}" \
-      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${multilib_devel_url}\"}" \
-      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${multilib_devel_sha_url}\"}"
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst\"}" \
+      --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst.SHA256\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.zst\"}" \
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${PACKAGE_REGISTRY_URL}/base-devel-${BUILD_VERSION}.tar.zst.SHA256\"}" \
+      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst\"}" \
+      --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${PACKAGE_REGISTRY_URL}/multilib-devel${BUILD_VERSION}.tar.zst.SHA256\"}"
   artifacts:
     reports:
       dotenv: build.env
