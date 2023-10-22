@@ -229,7 +229,7 @@ release:
       - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - apk update
-    - apk add jq curl httpie
+    - apk add jq curl httpie bash
   script:
     - |
       # Update the description on https://hub.docker.com/r/archlinux/archlinux
