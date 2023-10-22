@@ -100,8 +100,6 @@ rootfs:secure:
       - GROUP: [base, base-devel, multilib-devel]
   tags:
     - vm
-  before_script:
-    - pacman -Syu --noconfirm podman
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
