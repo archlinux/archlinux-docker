@@ -244,7 +244,7 @@ release:
         echo "Uploading ${group}.tar.zst.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst.SHA256
         package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.zst)
-        scripts/make-dockerfile.sh "${group}" "output" "curl -sOJL \"${package_url}\"" "${group}"
+        ./scripts/make-dockerfile.sh "${group}" "output" "curl -sOJL \"${package_url}\"" "${group}"
         sed -i "/^COPY ${group}.tar.zst \/$/d" output/Dockerfile.${group}
       done
     - >
