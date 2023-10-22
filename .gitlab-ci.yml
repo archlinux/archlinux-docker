@@ -231,13 +231,15 @@ release:
 
       # Upload rootfs to the Generic Packages Repository
       for group in base base-devel multilib-devel; do
-        sed -i "s|${group}.tar.zst|${group}-${BUILD_VERSION}.tar.zst|" output/${group}.tar.zst.SHA256
-        echo "Uploading ${group}.tar.zst"
-        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst
-        echo "Uploading ${group}.tar.zst.SHA256"
-        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file output/${group}.tar.zst.SHA256 ${PACKAGE_REGISTRY_URL}/${group}-${BUILD_VERSION}.tar.zst.SHA256
-        package_url=$(./ci/get-public-download-for-generic-package.sh ${group}-${BUILD_VERSION}.tar.zst)
         rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
+        mv "output/${group}.tar.zst" "output/${rootfs_file}"
+        mv "output/${group}.tar.zst.SHA256" "output/${rootfs_file}.SHA256"
+        sed -i "s|${group}.tar.zst|${rootfs_file}|" "output/${rootfs_file}.SHA256"
+        echo "Uploading ${rootfs_file}"
+        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}" "${PACKAGE_REGISTRY_URL}/"
+        echo "Uploading ${rootfs_file}.SHA256"
+        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}.SHA256" "${PACKAGE_REGISTRY_URL}/"
+        package_url=$(./ci/get-public-download-for-generic-package.sh ${rootfs_file})
         ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${package_url}\"" "${group}"
         sed -i "/^COPY ${rootfs_file} \/$/d" output/Dockerfile.${group}
       done
