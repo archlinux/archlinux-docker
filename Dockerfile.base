@@ -11,14 +11,15 @@
 # Note: Only official DockerHub images are allowed, see https://gitlab.archlinux.org/archlinux/archlinux-docker/-/commit/daa67d18579024947d69a45e6d028c5adb1c8c23
 # While we could use archlinux:base it could also break our build process, so we avoid dog fooding here
 FROM alpine:3.18 AS verify
+COPY base-20231022.0.186697.tar.zst /
 
 RUN apk add --no-cache curl tar zstd
 
-RUN curl -sOJL "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/5172/download" && \
-    echo "47c882ef76f9efc0445691d2a7b9ead6846b4d8e9d4379af8f874898726924f7  base-20231022.0.186671.tar.zst" > /tmp/sha256sums.txt && \
+RUN curl -sOJL "https://gitlab.archlinux.org/archlinux/archlinux-docker/-/package_files/5176/download" && \
+    echo "800025f6518c9c2bd48917692ec05599be9e095d62bfa149e0cc6212abb65f4f  base-20231022.0.186697.tar.zst" > /tmp/sha256sums.txt && \
     sha256sum -c /tmp/sha256sums.txt && \
     mkdir /rootfs && \
-    tar -C /rootfs --extract --file base.tar.zst
+    tar -C /rootfs --extract --file base-20231022.0.186697.tar.zst
 
 FROM scratch AS root
 
@@ -29,14 +30,14 @@ LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archl
 LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
 LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
-LABEL org.opencontainers.image.version="20231022.0.186671"
-LABEL org.opencontainers.image.revision="82f45449174e3ccb7d53ee6836501ef4e74e307d"
-LABEL org.opencontainers.image.created="2023-10-22T13:09:44+00:00"
+LABEL org.opencontainers.image.version="20231022.0.186697"
+LABEL org.opencontainers.image.revision="fb332d2218739a4a1900835773e35d17279b972c"
+LABEL org.opencontainers.image.created="2023-10-22T13:41:46+00:00"
 
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=20231022.0.186671' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20231022.0.186697' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
