@@ -176,11 +176,6 @@ image:publish:secure:
 .test:
   stage: test
   dependencies: []
-  only:
-    variables:
-      # Workaround for https://gitlab.com/gitlab-org/gitlab/-/issues/259663
-      # This is fine as at this point we're sure that the release works anyway.
-      - $GITLAB_USER_EMAIL != "project10185_bot2@example.com"
   except:
     refs:
       - releases
