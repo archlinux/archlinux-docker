@@ -12,8 +12,9 @@ Arch Linux provides OCI-Compliant container images in multiple repositories:
 * [Daily in our ghcr.io repository][ghcr-containers]:
 `podman pull ghcr.io/archlinux/archlinux:latest` or `docker pull ghcr.io/archlinux/archlinux:latest`
 
-Two versions of the image are provided: `base` (approx. 150 MiB) and `base-devel`
-(approx. 260 MiB), containing the respective meta package. Both are available as
+Three versions of the image are provided: `base` (approx. 150 MiB), `base-devel`
+(approx. 260 MiB) and `multilib-devel` (approx. 300MiB) containing the
+respective meta package. All of them are available as
 tags with `latest` pointing to `base`. Additionally, images are tagged with their
 date and build job number, f.e. `base-devel-20201118.0.9436`.
 
@@ -32,7 +33,8 @@ $ cosign verify ghcr.io/archlinux/archlinux:latest --certificate-identity-regexp
 
 ## Principles
 * Provide the Arch experience in a Docker image
-* Provide the simplest but complete image to `base` and `base-devel` on a regular basis
+* Provide the simplest but complete image to `base`, `base-devel` and
+`multilib-devel` on a regular basis
 * `pacman` needs to work out of the box
 * All installed packages have to be kept unmodified
 
@@ -63,9 +65,9 @@ Install the following Arch Linux packages:
 Make sure your user can directly interact with Podman (i.e. `podman info` works).
 
 ### Usage
-Run `make image-base` to build the `archlinux:base` image with the `base` meta
-package installed. You can also run `make image-base-devel` to build the image
-`archlinux:base-devel` which additionally has the `base-devel` group installed.
+There are multiple `make image-XXX` targets, where each creates the
+respective `archlinux:XXX` image based on the corresponding meta package.
+Currently those include `base`, `base-devel` and `multilib-devel`.
 
 ## Pipeline
 
