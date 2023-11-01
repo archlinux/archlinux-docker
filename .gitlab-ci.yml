@@ -295,7 +295,7 @@ release:
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst\",\"url\":\"${base_url}\"}" \
       --assets-link "{\"name\":\"base-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_sha_url}\"}" \
       --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${base_devel_url}\"}" \
-      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_devel_sha_url}\"}"
+      --assets-link "{\"name\":\"base-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${base_devel_sha_url}\"}" \
       --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst\",\"url\":\"${multilib_devel_url}\"}" \
       --assets-link "{\"name\":\"multilib-devel-${BUILD_VERSION}.tar.zst.SHA256\",\"url\":\"${multilib_devel_sha_url}\"}"
   artifacts:
