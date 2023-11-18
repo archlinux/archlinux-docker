@@ -330,7 +330,7 @@ publish-dockerhub:
     - git checkout -b "$head"
     - cp ../docker-library.template library/archlinux
     - |
-      for group in base base-devel; do
+      for group in base base-devel multilib-devel; do
         test "${group}" = "base" && extra="latest, " || extra=""
         echo "Tags: ${extra}${group}, ${group}-${BUILD_VERSION}" >> library/archlinux
         echo "GitCommit: ${BUILD_COMMIT}" >> library/archlinux
