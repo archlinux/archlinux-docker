@@ -314,7 +314,7 @@ publish-dockerhub:
   stage: publish
   dependencies:
     - get_version
-    - pre_release
+    - pre-release
     - release
   only:
     refs:
