@@ -220,6 +220,7 @@ pre-release:
       - schedules@archlinux/archlinux-docker
     variables:
       - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
+      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - apk update
     - apk add jq curl httpie bash
@@ -286,6 +287,7 @@ release:
       - schedules@archlinux/archlinux-docker
     variables:
       - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
+      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   script:
     - echo 'Creating release'
   release:
@@ -315,7 +317,6 @@ publish-dockerhub:
   dependencies:
     - get_version
     - pre-release
-    - release
   only:
     refs:
       - schedules
