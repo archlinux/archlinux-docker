@@ -1,5 +1,5 @@
 default:
-  image: "archlinux:latest"
+  image: "archlinux/archlinux:latest"
 
 stages:
   - cleanup
