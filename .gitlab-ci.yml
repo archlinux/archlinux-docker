@@ -135,7 +135,7 @@ image:build:secure:
     - tags
   before_script:
     - pacman -Syu --noconfirm podman
-    - podman login -u "$GITLAB_PROJECT_USER" -p "$GITLAB_PROJECT_TOKEN" "$CI_REGISTRY"
+    - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
 
 # Build and publish to the Arch Linux group namespaces:
