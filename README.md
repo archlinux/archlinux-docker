@@ -94,6 +94,10 @@ Changes in Git feature branches are built and tested using the pipeline as well.
 Development images are uploaded to our
 [GitLab Container Registry][self-container-registry].
 
+### Maintenance
+
+Every year in June the content of the protected `GITLAB_PROJECT_TOKEN` variable needs to be replaced. To do this a GitLab admin needs to create a new [Access Token][access-tokens] with `api` and `write_repository` scope and the `Maintainer` role. This will create a new Bot User which needs to be given access to the protected `releases` branch.
+
 [pipeline]: https://gitlab.archlinux.org/archlinux/archlinux-docker/badges/master/pipeline.svg
 [commits]: https://gitlab.archlinux.org/archlinux/archlinux-docker/-/commits/master
 
@@ -113,3 +117,5 @@ Development images are uploaded to our
 [github-docker-arch]: https://github.com/docker-library/official-images/blob/master/library/archlinux
 
 [self-container-registry]: https://gitlab.archlinux.org/archlinux/archlinux-docker/container_registry
+
+[access-tokens]: https://gitlab.archlinux.org/archlinux/archlinux-docker/-/settings/access_tokens

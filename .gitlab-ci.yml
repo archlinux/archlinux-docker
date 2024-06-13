@@ -248,6 +248,7 @@ pre-release:
         ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}"
         sed -i "/^COPY ${rootfs_file} \/$/d" output/Dockerfile.${group}
       done
+    # See README.md###Maintenance for notes about `GITLAB_PROJECT_TOKEN`
     - >
       curl -sSf --request POST -o commit-response.json
       --header "PRIVATE-TOKEN: ${GITLAB_PROJECT_TOKEN}"
