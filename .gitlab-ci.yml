@@ -223,12 +223,15 @@ pre-release:
       - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - apk update
-    - apk add jq curl httpie bash
+    - apk add jq curl bash
   script:
     - |
       echo "Update the description of our daily DockerHub repository at https://hub.docker.com/r/archlinux/archlinux"
-      TOKEN="$(http --ignore-stdin POST https://hub.docker.com/v2/users/login username="${DOCKERHUB_USERNAME}" password="${DOCKERHUB_PASSWORD}" | jq -er .token)"
-      http --ignore-stdin PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ Authorization:"JWT ${TOKEN}" full_description="$(cat README.md)"
+      TOKEN="$(curl -X POST https://hub.docker.com/v2/users/login -H "Content-Type: application/json" -d "{\"username\": \"${DOCKERHUB_USERNAME}\", \"password\": \"${DOCKERHUB_PASSWORD}\"}" | jq -er .token)"
+      curl -X PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ \
+           -H "Authorization: JWT ${TOKEN}" \
+           -H "Content-Type: application/json" \
+           -d "{\"full_description\": $(cat README.md | jq -sR .)}"
 
       # Upload rootfs to the Generic Packages Repository
       for group in base base-devel multilib-devel; do
