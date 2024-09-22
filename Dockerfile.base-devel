@@ -14,11 +14,11 @@ FROM alpine:3.19 AS verify
 
 RUN apk add --no-cache curl tar zstd
 
-RUN curl -sOJL "https://gitlab.archlinux.org/api/v4/projects/10185/packages/generic/rootfs/20240922.0.264758/base-devel-20240922.0.264758.tar.zst" && \
-    echo "95c7a96c773b61a0eb6402b860b97964c1243fa48d010ebe52e6ccc3a89c7446  base-devel-20240922.0.264758.tar.zst" > /tmp/sha256sums.txt && \
+RUN curl -sOJL "https://gitlab.archlinux.org/api/v4/projects/10185/packages/generic/rootfs/20240922.0.264844/base-devel-20240922.0.264844.tar.zst" && \
+    echo "5d317b63af067f35d675b4c26078e1d2e92179951bb3e55a4070111afe2edd56  base-devel-20240922.0.264844.tar.zst" > /tmp/sha256sums.txt && \
     sha256sum -c /tmp/sha256sums.txt && \
     mkdir /rootfs && \
-    tar -C /rootfs --extract --file base-devel-20240922.0.264758.tar.zst
+    tar -C /rootfs --extract --file base-devel-20240922.0.264844.tar.zst
 
 FROM scratch AS root
 
@@ -29,14 +29,14 @@ LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archl
 LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
 LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
-LABEL org.opencontainers.image.version="20240922.0.264758"
+LABEL org.opencontainers.image.version="20240922.0.264844"
 LABEL org.opencontainers.image.revision="61cb892bfc251e46f73e716ceb3b903ec4e9e725"
-LABEL org.opencontainers.image.created="2024-09-22T00:07:28+00:00"
+LABEL org.opencontainers.image.created="2024-09-22T09:07:31+00:00"
 
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=20240922.0.264758' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20240922.0.264844' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
