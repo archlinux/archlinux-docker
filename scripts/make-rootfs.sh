@@ -18,6 +18,11 @@ cat pacman-conf.d-noextract.conf >> "$BUILDDIR/etc/pacman.conf"
 
 sed 's/Include = /&rootfs/g' < "$BUILDDIR/etc/pacman.conf" > pacman.conf
 
+sed -i '/#DisableSandbox/{c\
+# No kernel landlock in containerd\
+DisableSandbox
+}' "$BUILDDIR/etc/pacman.conf"
+
 cp --recursive --preserve=timestamps rootfs/* "$BUILDDIR/"
 ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
 
