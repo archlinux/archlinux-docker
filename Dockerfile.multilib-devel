@@ -10,15 +10,15 @@
 
 # Note: Only official DockerHub images are allowed, see https://gitlab.archlinux.org/archlinux/archlinux-docker/-/commit/daa67d18579024947d69a45e6d028c5adb1c8c23
 # While we could use archlinux:base it could also break our build process, so we avoid dog fooding here
-FROM alpine:3.21 AS verify
+FROM alpine:3.22 AS verify
 
 RUN apk add --no-cache curl tar zstd
 
-RUN curl -sOJL "https://gitlab.archlinux.org/api/v4/projects/10185/packages/generic/rootfs/20250601.0.358085/multilib-devel-20250601.0.358085.tar.zst" && \
-    echo "1b99d3090bc68bc27889660aacbb28d9d93b951f952df82a8e4a925d76fe3929  multilib-devel-20250601.0.358085.tar.zst" > /tmp/sha256sums.txt && \
+RUN curl -sOJL "https://gitlab.archlinux.org/api/v4/projects/10185/packages/generic/rootfs/20250602.0.358409/multilib-devel-20250602.0.358409.tar.zst" && \
+    echo "ca186a7abc3fae1add5890affab34ef4516b30f6efa5a7eacb67080d2f033b95  multilib-devel-20250602.0.358409.tar.zst" > /tmp/sha256sums.txt && \
     sha256sum -c /tmp/sha256sums.txt && \
     mkdir /rootfs && \
-    tar -C /rootfs --extract --file multilib-devel-20250601.0.358085.tar.zst
+    tar -C /rootfs --extract --file multilib-devel-20250602.0.358409.tar.zst
 
 FROM scratch AS root
 
@@ -29,14 +29,14 @@ LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archl
 LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
 LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
-LABEL org.opencontainers.image.version="20250601.0.358085"
-LABEL org.opencontainers.image.revision="ae0527df18a9c5b94b28351b2265a20012d2fda0"
-LABEL org.opencontainers.image.created="2025-06-01T09:08:08+00:00"
+LABEL org.opencontainers.image.version="20250602.0.358409"
+LABEL org.opencontainers.image.revision="744b1c5c6a7f999c9a8b3daa5897c922e86563ee"
+LABEL org.opencontainers.image.created="2025-06-02T09:07:15+00:00"
 
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=20250601.0.358085' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20250602.0.358409' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
