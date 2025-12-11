@@ -240,8 +240,7 @@ pre-release:
         mv "output/${group}.tar.zst.SHA256" "output/${rootfs_file}.SHA256"
         sed -i "s|${group}.tar.zst|${rootfs_file}|" "output/${rootfs_file}.SHA256"
         echo "Uploading ${rootfs_file}"
-        echo "curl -vsSf --header \"JOB-TOKEN: redacted\" --upload-file \"output/${rootfs_file}\" \"${PACKAGE_REGISTRY_URL}/\""
-        curl -vsSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}" "${PACKAGE_REGISTRY_URL}/"
+        curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}" "${PACKAGE_REGISTRY_URL}/"
         echo "Uploading ${rootfs_file}.SHA256"
         curl -sSf --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file "output/${rootfs_file}.SHA256" "${PACKAGE_REGISTRY_URL}/"
       done
