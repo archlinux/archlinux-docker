@@ -10,15 +10,15 @@
 
 # Note: Only official DockerHub images are allowed, see https://gitlab.archlinux.org/archlinux/archlinux-docker/-/commit/daa67d18579024947d69a45e6d028c5adb1c8c23
 # While we could use archlinux:base it could also break our build process, so we avoid dog fooding here
-FROM alpine:3.22 AS verify
+FROM alpine:3.23 AS verify
 
 RUN apk add --no-cache curl tar zstd
 
-RUN curl -sOJL "https://gitlab.archlinux.org/api/v4/projects/10185/packages/generic/rootfs/20251211.0.466181/base-20251211.0.466181.tar.zst" && \
-    echo "a7224135f8f43711b878fcf042aed35631a9cf426dd219b5620c0ad44f163911  base-20251211.0.466181.tar.zst" > /tmp/sha256sums.txt && \
+RUN curl -sOJL "https://gitlab.archlinux.org/api/v4/projects/10185/packages/generic/rootfs/20251212.0.466852/base-20251212.0.466852.tar.zst" && \
+    echo "b2c4f55ceec901697cd99a753e2c7d119980b6f73678f4f311de9b56d7f2702d  base-20251212.0.466852.tar.zst" > /tmp/sha256sums.txt && \
     sha256sum -c /tmp/sha256sums.txt && \
     mkdir /rootfs && \
-    tar -C /rootfs --extract --file base-20251211.0.466181.tar.zst
+    tar -C /rootfs --extract --file base-20251212.0.466852.tar.zst
 
 FROM scratch AS root
 
@@ -29,14 +29,14 @@ LABEL org.opencontainers.image.url="https://gitlab.archlinux.org/archlinux/archl
 LABEL org.opencontainers.image.documentation="https://wiki.archlinux.org/title/Docker#Arch_Linux"
 LABEL org.opencontainers.image.source="https://gitlab.archlinux.org/archlinux/archlinux-docker"
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later"
-LABEL org.opencontainers.image.version="20251211.0.466181"
-LABEL org.opencontainers.image.revision="f7a03d6b9d48bff92af94b6d5bf2f54e0e408260"
-LABEL org.opencontainers.image.created="2025-12-11T09:07:24+00:00"
+LABEL org.opencontainers.image.version="20251212.0.466852"
+LABEL org.opencontainers.image.revision="d886fb482eef91bbabb78e8a3a63b8d5cd2e810f"
+LABEL org.opencontainers.image.created="2025-12-12T09:07:23+00:00"
 
 COPY --from=verify /rootfs/ /
 
 RUN ldconfig && \
-    sed -i '/BUILD_ID/a VERSION_ID=20251211.0.466181' /etc/os-release
+    sed -i '/BUILD_ID/a VERSION_ID=20251212.0.466852' /etc/os-release
 
 ENV LANG=C.UTF-8
 CMD ["/usr/bin/bash"]
