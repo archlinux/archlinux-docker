@@ -28,6 +28,7 @@ ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
 
 $WRAPPER -- \
     pacman -Sy -r "$BUILDDIR" \
+        --disable-sandbox-filesystem \
         --noconfirm --dbpath "$BUILDDIR/var/lib/pacman" \
         --config pacman.conf \
         --noscriptlet \
