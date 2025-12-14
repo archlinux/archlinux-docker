@@ -18,9 +18,9 @@ cat pacman-conf.d-noextract.conf >> "$BUILDDIR/etc/pacman.conf"
 
 sed 's/Include = /&rootfs/g' < "$BUILDDIR/etc/pacman.conf" > pacman.conf
 
-sed -i '/#DisableSandbox/{c\
+sed -i '/#DisableSandboxFilesystem/{c\
 # No kernel landlock in containerd\
-DisableSandbox
+DisableSandboxFilesystem
 }' "$BUILDDIR/etc/pacman.conf"
 
 cp --recursive --preserve=timestamps rootfs/* "$BUILDDIR/"
