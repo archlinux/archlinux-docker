@@ -16,11 +16,10 @@ cleanup:
   tags:
     - secure
     - docker
-  only:
-    refs:
-      - schedules@archlinux/archlinux-docker
-    variables:
-      - $CLEANUP_PACKAGE_REGISTRY == "TRUE"
+  rules:
+    - if: |
+        $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_PATH == "archlinux/archlinux-docker" &&
+        $CLEANUP_PACKAGE_REGISTRY == "TRUE"
   before_script:
     - pacman -Syu --noconfirm jq
   script:
@@ -34,9 +33,10 @@ lint:
   image: hadolint/hadolint:latest-alpine
   # DL3018: We don't need apk version pins, we use the bleeding edge
   script: hadolint --ignore DL3018 Dockerfile.template
-  except:
-    - releases
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+    - when: on_success
 
 # This is an implicit gitlab stage, with the build.env variables used by either
 # other stages or auxiliarry scripts.
@@ -76,23 +76,20 @@ get_version:
 
 rootfs:
   extends: .rootfs
-  except:
-    - master@archlinux/archlinux-docker
-    - releases@archlinux/archlinux-docker
-    - schedules@archlinux/archlinux-docker
-    - tags@archlinux/archlinux-docker
+  rules:
+  - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "archlinux/archlinux-docker"'
+    when: never
+  - if: '$CI_COMMIT_TAG'
+    when: never
+  - when: on_success
 
 rootfs:secure:
   extends: .rootfs
   tags:
     - secure
     - docker
-  only:
-    - master@archlinux/archlinux-docker
-    - schedules@archlinux/archlinux-docker
-  except:
-    - tags
-    - releases
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "archlinux/archlinux-docker"'
 
 .image:
   stage: image
@@ -113,11 +110,12 @@ rootfs:secure:
 
 image:build:
   extends: .image
-  except:
-    - master@archlinux/archlinux-docker
-    - releases
-    - schedules@archlinux/archlinux-docker
-    - tags
+  rules:
+  - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "archlinux/archlinux-docker"'
+    when: never
+  - if: '$CI_COMMIT_TAG'
+    when: never
+  - when: on_success
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
@@ -128,11 +126,8 @@ image:build:secure:
   tags:
     - secure
     - vm
-  only:
-    - master@archlinux/archlinux-docker
-    - schedules@archlinux/archlinux-docker
-  except:
-    - tags
+  rules:
+  - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PROJECT_PATH == "archlinux/archlinux-docker"'
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
@@ -147,8 +142,8 @@ image:publish:secure:
   tags:
     - secure
     - vm
-  only:
-    - tags@archlinux/archlinux-docker
+  rules:
+    - if: '$CI_COMMIT_TAG && $CI_PROJECT_PATH == "archlinux/archlinux-docker"'
   before_script:
     - pacman -Syu --noconfirm podman
     - podman login -u "$DOCKERHUB_USERNAME" -p "$DOCKERHUB_ACCESS_TOKEN" "docker.io"
@@ -177,10 +172,10 @@ image:publish:secure:
 .test:
   stage: test
   dependencies: []
-  except:
-    refs:
-      - releases
-      - tags
+  rules:
+    - if: '$CI_COMMIT_TAG'
+      when: never
+    - when: on_success
 
 .test-script: &test-script
   - test "$(cat /etc/group | wc -l)" -gt 10
@@ -215,12 +210,11 @@ pre-release:
   tags:
     - secure
     - docker
-  only:
-    refs:
-      - schedules@archlinux/archlinux-docker
-    variables:
-      - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
-      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
+  rules:
+    - if: |
+        $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_PATH == "archlinux/archlinux-docker" &&
+        $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE" &&
+        $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - apk update
     - apk add jq curl bash
@@ -286,12 +280,11 @@ release:
   tags:
     - secure
     - docker
-  only:
-    refs:
-      - schedules@archlinux/archlinux-docker
-    variables:
-      - $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE"
-      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
+  rules:
+    - if: |
+        $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_PATH == "archlinux/archlinux-docker" &&
+        $PUBLISH_ARCHLINUX_REPOSITORY == "TRUE" &&
+        $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   script:
     - echo 'Creating release'
   release:
@@ -321,11 +314,10 @@ publish-dockerhub:
   dependencies:
     - get_version
     - pre-release
-  only:
-    refs:
-      - schedules
-    variables:
-      - $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
+  rules:
+    - if: |
+        $CI_PIPELINE_SOURCE == "schedule" && $CI_PROJECT_PATH == "archlinux/archlinux-docker" &&
+        $PUBLISH_OFFICIAL_LIBRARY == "TRUE"
   before_script:
     - export | grep -q BUILD_VERSION=
     - export | grep -q BUILD_COMMIT=
