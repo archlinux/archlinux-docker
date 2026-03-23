@@ -40,7 +40,7 @@ $ cosign verify ghcr.io/archlinux/archlinux:latest --certificate-identity-regexp
 * Provide the Arch experience in a Docker image
 * Provide the simplest but complete image to `base`, `base-devel` and
 `multilib-devel` on a regular basis
-* `pacman` needs to work out of the box (with the expection of the `repro` image for now, due to technical constraints)
+* `pacman` needs to work out of the box (with the exception of the `repro` image, while we are working on technical contstrains)
 * All installed packages have to be kept unmodified
 
 >>>
