@@ -1,7 +1,7 @@
 OCITOOL=podman # or docker
 BUILDDIR=$(shell pwd)/build
 OUTPUTDIR=$(shell pwd)/output
-ARCHIVE_SNAPSHOT=$(shell date -d "$(awk -F. '{print $1"-"$2"-"$3}' <<< "$IMAGE_VERSION") -1 day" +"%Y/%m/%d")
+ARCHIVE_SNAPSHOT=$(shell date -d "-1 day" +"%Y/%m/%d")
 SOURCE_DATE_EPOCH=$(shell date -u -d "$(echo "$ARCHIVE_SNAPSHOT")" +"%s")
 
 .PHONY: clean
