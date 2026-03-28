@@ -310,7 +310,7 @@ release:
     ref: 'releases'
     assets:
       links:
-        - name: 'base-${BUILD_VERSION}.tar.zst
+        - name: 'base-${BUILD_VERSION}.tar.zst'
           url: '${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst'
         - name: 'base-${BUILD_VERSION}.tar.zst.SHA256'
           url: '${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst.SHA256'
@@ -322,7 +322,7 @@ release:
           url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst'
         - name: 'multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
           url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
-        - name: 'repro-${BUILD_VERSION}.tar.zst
+        - name: 'repro-${BUILD_VERSION}.tar.zst'
           url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst'
         - name: 'repro-${BUILD_VERSION}.tar.zst.SHA256'
           url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst.SHA256'
