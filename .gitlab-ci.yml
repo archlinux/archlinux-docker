@@ -213,6 +213,8 @@ test:repro:
   extends: .test
   image: $CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG
   script:
+    - pacman-key --init
+    - pacman-key --populate archlinux
     - *test-script
 
 pre-release:
