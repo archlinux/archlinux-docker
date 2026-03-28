@@ -36,7 +36,9 @@ cp --recursive --preserve=timestamps rootfs/* "$BUILDDIR/"
 ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
 
 # Use archived repo snapshot from archive.archlinux.org for reproducible builds
-sed -i "1iServer = https://archive.archlinux.org/repos/$ARCHIVE_SNAPSHOT/\\\$repo/os/\\\$arch" "$BUILDDIR/etc/pacman.d/mirrorlist"
+if [[ "$GROUP" == "repro" ]]; then
+    sed -i "1iServer = https://archive.archlinux.org/repos/$ARCHIVE_SNAPSHOT/\\\$repo/os/\\\$arch" "$BUILDDIR/etc/pacman.d/mirrorlist"
+fi
 
 $WRAPPER -- \
     pacman -Sy -r "$BUILDDIR" \
@@ -51,22 +53,29 @@ $WRAPPER -- chroot "$BUILDDIR" update-ca-trust
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --init
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --populate
 
-# Remove archived repo snapshot from the mirrorlist
-sed -i '1d' "$BUILDDIR/etc/pacman.d/mirrorlist"
-
-if [[ "$GROUP" == "repro" ]]; 
+if [[ "$GROUP" == "repro" ]]; then
+    # Remove archived repo snapshot from the mirrorlist
+    sed -i '1d' "$BUILDDIR/etc/pacman.d/mirrorlist"
     # Clear pacman keyring for reproducible builds
     rm -rf "$BUILDDIR"/etc/pacman.d/gnupg/*
+    # Normalize mtimes
+    find "$BUILDDIR" -exec touch --no-dereference --date="@$SOURCE_DATE_EPOCH" {} +
 fi
-
-# Normalize mtimes
-find "$BUILDDIR" -exec touch --no-dereference --date="@$SOURCE_DATE_EPOCH" {} +
 
 # add system users
 $WRAPPER -- chroot "$BUILDDIR" /usr/bin/systemd-sysusers --root "/"
 
 # remove passwordless login for root (see CVE-2019-5021 for reference)
 sed -i -e 's/^root::/root:!:/' "$BUILDDIR/etc/shadow"
+
+if [[ "$GROUP" == "repro" ]]; then
+    repro_tar_options=(
+        --mtime="@$SOURCE_DATE_EPOCH"
+        --clamp-mtime
+        --sort=name
+        --pax-option=delete=atime,delete=ctime
+    )
+fi
 
 # fakeroot to map the gid/uid of the builder process to root
 # fixes #22
@@ -75,10 +84,7 @@ fakeroot -- \
         --numeric-owner \
         --xattrs \
         --acls \
-        --mtime="@$SOURCE_DATE_EPOCH" \
-        --clamp-mtime \
-        --sort=name \
-        --pax-option=delete=atime,delete=ctime \
+        "${repro_tar_options[@]}" \
         --exclude-from=exclude \
         -C "$BUILDDIR" \
         -c . \
