@@ -215,6 +215,8 @@ test:repro:
   script:
     - pacman-key --init
     - pacman-key --populate archlinux
+    - pacman -Syu --noconfirm arch-repro-status
+    - arch-repro-status
     - *test-script
 
 pre-release:
