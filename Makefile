@@ -18,6 +18,6 @@ $(OUTPUTDIR)/Dockerfile.%: $(OUTPUTDIR)/%.tar.zst
 
 # The following is for local builds only, it is not used by the CI/CD pipeline
 
-all: image-repro image-base image-base-devel image-multilib-devel
+all: image-base image-base-devel image-multilib-devel image-repro
 image-%: $(OUTPUTDIR)/Dockerfile.%
 	${OCITOOL} build -f $(OUTPUTDIR)/Dockerfile.$(*) -t archlinux/archlinux:$(*) $(OUTPUTDIR)

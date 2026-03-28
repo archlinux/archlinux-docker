@@ -61,7 +61,7 @@ get_version:
   stage: rootfs
   parallel:
     matrix:
-      - GROUP: [repro, base, base-devel, multilib-devel]
+      - GROUP: [base, base-devel, multilib-devel, repro]
   before_script:
     - pacman -Syu --noconfirm git make fakechroot fakeroot
     - pacman -Sdd --noconfirm devtools
@@ -98,7 +98,7 @@ rootfs:secure:
   stage: image
   parallel:
     matrix:
-      - GROUP: [repro, base, base-devel, multilib-devel]
+      - GROUP: [base, base-devel, multilib-devel, repro]
   tags:
     - vm
   id_tokens:
@@ -192,12 +192,6 @@ image:publish:secure:
   - id -u http
   - locale | grep -q UTF-8
 
-test:repro:
-  extends: .test
-  image: $CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG
-  script:
-    - *test-script
-
 test:base:
   extends: .test
   image: $CI_REGISTRY_IMAGE:base-$CI_COMMIT_REF_SLUG
@@ -214,6 +208,12 @@ test:base-devel:
     - make -v
     - test -u /usr/bin/sudo   # issue 70
     - test -u /usr/bin/passwd
+
+test:repro:
+  extends: .test
+  image: $CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG
+  script:
+    - *test-script
 
 pre-release:
   stage: pre-release
@@ -240,7 +240,7 @@ pre-release:
            -d "{\"full_description\": $(cat README.md | jq -sR .)}"
 
       # Upload rootfs to the Generic Packages Repository
-      for group in repro base base-devel multilib-devel; do
+      for group in base base-devel multilib-devel repro; do
         rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
         mv "output/${group}.tar.zst" "output/${rootfs_file}"
         mv "output/${group}.tar.zst.SHA256" "output/${rootfs_file}.SHA256"
@@ -252,7 +252,7 @@ pre-release:
       done
 
       # Create the Dockerfiles, commit to the release branch
-      for group in repro base base-devel multilib-devel; do
+      for group in base base-devel multilib-devel repro; do
         rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
         ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}"
         sed -i "/^COPY ${rootfs_file} \/$/d" output/Dockerfile.${group}
@@ -264,9 +264,6 @@ pre-release:
       --form "branch=releases"
       --form "commit_message=Release ${BUILD_VERSION}"
       --form "actions[][action]=update"
-      --form "actions[][file_path]=Dockerfile.repro"
-      --form "actions[][content]=<output/Dockerfile.repro"
-      --form "actions[][action]=update"
       --form "actions[][file_path]=Dockerfile.base"
       --form "actions[][content]=<output/Dockerfile.base"
       --form "actions[][action]=update"
@@ -275,6 +272,9 @@ pre-release:
       --form "actions[][action]=update"
       --form "actions[][file_path]=Dockerfile.multilib-devel"
       --form "actions[][content]=<output/Dockerfile.multilib-devel"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=Dockerfile.repro"
+      --form "actions[][content]=<output/Dockerfile.repro"
       --form "actions[][action]=update"
       --form "actions[][file_path]=.gitlab-ci.yml"
       --form "actions[][content]=<.gitlab-ci.yml"
@@ -310,10 +310,6 @@ release:
     ref: 'releases'
     assets:
       links:
-        - name: 'repro-${BUILD_VERSION}.tar.zst
-          url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst'
-        - name: 'repro-${BUILD_VERSION}.tar.zst.SHA256'
-          url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst.SHA256'
         - name: 'base-${BUILD_VERSION}.tar.zst
           url: '${PACKAGE_REGISTRY_URL}/base-${BUILD_VERSION}.tar.zst'
         - name: 'base-${BUILD_VERSION}.tar.zst.SHA256'
@@ -326,6 +322,10 @@ release:
           url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst'
         - name: 'multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
           url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
+        - name: 'repro-${BUILD_VERSION}.tar.zst
+          url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst'
+        - name: 'repro-${BUILD_VERSION}.tar.zst.SHA256'
+          url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst.SHA256'
 
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
 # Note: The description is maintained here: https://github.com/docker-library/docs/tree/master/archlinux
@@ -360,7 +360,7 @@ publish-dockerhub:
     - git checkout -b "$head"
     - cp ../docker-library.template library/archlinux
     - |
-      for group in repro base base-devel multilib-devel; do
+      for group in base base-devel multilib-devel repro; do
         test "${group}" = "base" && extra="latest, " || extra=""
         echo "Tags: ${extra}${group}, ${group}-${BUILD_VERSION}" >> library/archlinux
         echo "GitCommit: ${BUILD_COMMIT}" >> library/archlinux
