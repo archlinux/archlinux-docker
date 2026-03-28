@@ -7,6 +7,8 @@ declare -r WRAPPER="fakechroot -- fakeroot"
 declare -r GROUP="$1"
 declare -r BUILDDIR="$2"
 declare -r OUTPUTDIR="$3"
+declare -r ARCHIVE_SNAPSHOT="$4"
+declare -rx SOURCE_DATE_EPOCH="$5"
 
 mkdir -vp "$BUILDDIR/alpm-hooks/usr/share/libalpm/hooks"
 find /usr/share/libalpm/hooks -exec ln -sf /dev/null "$BUILDDIR/alpm-hooks"{} \;
@@ -33,17 +35,32 @@ fi
 cp --recursive --preserve=timestamps rootfs/* "$BUILDDIR/"
 ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
 
+# Use archived repo snapshot from archive.archlinux.org for reproducible builds
+sed -i "1iServer = https://archive.archlinux.org/repos/$ARCHIVE_SNAPSHOT/\\\$repo/os/\\\$arch" "$BUILDDIR/etc/pacman.d/mirrorlist"
+
 $WRAPPER -- \
     pacman -Sy -r "$BUILDDIR" \
         --disable-sandbox-filesystem \
         --noconfirm --dbpath "$BUILDDIR/var/lib/pacman" \
         --config pacman.conf \
         --noscriptlet \
-        --hookdir "$BUILDDIR/alpm-hooks/usr/share/libalpm/hooks/" base "$GROUP"
+        --hookdir "$BUILDDIR/alpm-hooks/usr/share/libalpm/hooks/" base ${GROUP:+${GROUP/repro/}}
+#                           # repro is not a package, so excluded here ^
 
 $WRAPPER -- chroot "$BUILDDIR" update-ca-trust
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --init
 $WRAPPER -- chroot "$BUILDDIR" pacman-key --populate
+
+# Remove archived repo snapshot from the mirrorlist
+sed -i '1d' "$BUILDDIR/etc/pacman.d/mirrorlist"
+
+if [[ "$GROUP" == "repro" ]]; 
+    # Clear pacman keyring for reproducible builds
+    rm -rf "$BUILDDIR"/etc/pacman.d/gnupg/*
+fi
+
+# Normalize mtimes
+find "$BUILDDIR" -exec touch --no-dereference --date="@$SOURCE_DATE_EPOCH" {} +
 
 # add system users
 $WRAPPER -- chroot "$BUILDDIR" /usr/bin/systemd-sysusers --root "/"
@@ -58,6 +75,10 @@ fakeroot -- \
         --numeric-owner \
         --xattrs \
         --acls \
+        --mtime="@$SOURCE_DATE_EPOCH" \
+        --clamp-mtime \
+        --sort=name \
+        --pax-option=delete=atime,delete=ctime \
         --exclude-from=exclude \
         -C "$BUILDDIR" \
         -c . \
