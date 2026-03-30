@@ -163,10 +163,6 @@ image:build:secure:
         -t "archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG" \
         "$CI_PROJECT_DIR/repro-output"
     - podman pull "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
-    - echo "Digest of the original image is:"
-    - podman inspect --format '{{.Digest}}' "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
-    - echo "Digest of the rebuilt image is:"
-    - podman inspect --format '{{.Digest}}' "localhost/archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG"
     - diffoci diff --semantic podman://$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG podman://localhost/archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG
     - echo "Image is reproducible!"
   artifacts:
