@@ -122,9 +122,6 @@ image:build:
     - pacman -Syu --noconfirm podman
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
-  artifacts:
-    paths:
-      - output/*
 
 image:build:secure:
   extends: .image
@@ -140,9 +137,6 @@ image:build:secure:
     - pacman -Syu --noconfirm podman
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
-  artifacts:
-    paths:
-      - output/*
 
 # Build and publish to the Arch Linux group namespaces:
 # https://hub.docker.com/r/archlinux/archlinux
