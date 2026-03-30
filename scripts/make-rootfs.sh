@@ -38,6 +38,9 @@ ln -fs /usr/lib/os-release "$BUILDDIR/etc/os-release"
 # Use archived repo snapshot from archive.archlinux.org for reproducible builds
 if [[ "$GROUP" == "repro" ]]; then
     sed -i "1iServer = https://archive.archlinux.org/repos/$ARCHIVE_SNAPSHOT/\\\$repo/os/\\\$arch" "$BUILDDIR/etc/pacman.d/mirrorlist"
+    repro_pacman_options=(
+        --logfile /dev/null
+    )
 fi
 
 $WRAPPER -- \
@@ -46,6 +49,7 @@ $WRAPPER -- \
         --noconfirm --dbpath "$BUILDDIR/var/lib/pacman" \
         --config pacman.conf \
         --noscriptlet \
+        "${repro_pacman_options[@]}" \
         --hookdir "$BUILDDIR/alpm-hooks/usr/share/libalpm/hooks/" base ${GROUP:+${GROUP/repro/}} # repro is not a package
 
 $WRAPPER -- chroot "$BUILDDIR" update-ca-trust
