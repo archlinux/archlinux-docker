@@ -149,10 +149,16 @@ image:build:secure:
 .test_repro:
   stage: repro
   before_script:
-    - pacman -Syu --noconfirm git make fakechroot fakeroot podman diffoci
+    - pacman -Syu --noconfirm git make fakechroot fakeroot podman diffoscope diffoci
     - pacman -Sdd --noconfirm devtools
   script:
     - make BUILDDIR="$PWD/repro-build" OUTPUTDIR="$PWD/repro-output" $PWD/repro-output/Dockerfile.repro
+    - echo "The sha256 hash of the original rootFS is:"
+    - cat output/repro.tar.zst.SHA256
+    - echo "The sha256 hash of the rebuilt rootFS is:"
+    - cat repro-output/repro.tar.zst.SHA256
+    - diffoscope output/repro.tar.zst repro-output/repro.tar.zst
+    - echo "RootFS is reproducible!"
     - |
       SOURCE_DATE_EPOCH=$(date -u -d "-1 day" +%s)
       podman build \
