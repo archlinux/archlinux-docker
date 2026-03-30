@@ -14,7 +14,7 @@ BUILD_VERSION="${BUILD_VERSION:-dev}"
 CI_COMMIT_SHA="${CI_COMMIT_SHA:-$(git rev-parse HEAD)}"
 
 # Honor SOURCE_DATE_EPOCH for the repro GROUP
-if [ "$GROUP" = "repro" ]; then
+if [[ "$GROUP" == "repro" ]]; then
     CREATED_TIMESTAMP=$(date -u -d "@$SOURCE_DATE_EPOCH" +%Y-%m-%dT%H:%M:%SZ)
 else
     CREATED_TIMESTAMP=$(date -Is)

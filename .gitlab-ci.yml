@@ -108,7 +108,7 @@ rootfs:secure:
   script:
     - |
       REPRO_ARGS=""
-      if [ "$GROUP" = "repro" ]; then
+      if [[ "$GROUP" == "repro" ]]; then
         SOURCE_DATE_EPOCH=$(date -u -d "-1 day" +%s)
         REPRO_ARGS="--source-date-epoch=${SOURCE_DATE_EPOCH} --rewrite-timestamp"
       fi
