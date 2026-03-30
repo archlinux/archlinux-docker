@@ -6,6 +6,7 @@ stages:
   - lint
   - rootfs
   - image
+  - repro
   - test
   - pre-release
   - release
@@ -105,9 +106,16 @@ rootfs:secure:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   script:
-    - podman build
-        -f "$CI_PROJECT_DIR/output/Dockerfile.$GROUP"
-        -t "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG"
+    - |
+      REPRO_ARGS=""
+      if [ "$GROUP" = "repro" ]; then
+        SOURCE_DATE_EPOCH=$(date -u -d "-1 day" +%s)
+        REPRO_ARGS="--source-date-epoch=${SOURCE_DATE_EPOCH} --rewrite-timestamp"
+      fi
+      podman build \
+        $REPRO_ARGS \
+        -f "$CI_PROJECT_DIR/output/Dockerfile.$GROUP" \
+        -t "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG" \
         "$CI_PROJECT_DIR/output"
     - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG"
 
@@ -137,6 +145,55 @@ image:build:secure:
     - pacman -Syu --noconfirm podman
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
+
+.test_repro:
+  stage: repro
+  before_script:
+    - pacman -Syu --noconfirm git make fakechroot fakeroot podman diffoci
+    - pacman -Sdd --noconfirm devtools
+  script:
+    - make BUILDDIR="$PWD/repro-build" OUTPUTDIR="$PWD/repro-output" $PWD/repro-output/Dockerfile.repro
+    - |
+      SOURCE_DATE_EPOCH=$(date -u -d "-1 day" +%s)
+      podman build \
+        --no-cache \
+        --source-date-epoch=${SOURCE_DATE_EPOCH} \
+        --rewrite-timestamp \
+        -f "$CI_PROJECT_DIR/repro-output/Dockerfile.repro" \
+        -t "archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG" \
+        "$CI_PROJECT_DIR/repro-output"
+    - podman pull "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
+    - echo "Digest of the original image is:"
+    - podman inspect --format '{{.Digest}}' "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
+    - echo "Digest of the rebuilt image is:"
+    - podman inspect --format '{{.Digest}}' "localhost/archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG"
+    - diffoci diff --semantic podman://$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG podman://localhost/archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG
+    - echo "Image is reproducible!"
+  artifacts:
+    paths:
+      - repro-output/*
+    exclude:
+      - repro-output/*.tar
+    expire_in: 2h
+
+test-repro:
+  extends: .test_repro
+  tags:
+    - vm
+  except:
+    - master@archlinux/archlinux-docker
+    - releases@archlinux/archlinux-docker
+    - schedules@archlinux/archlinux-docker
+    - tags@archlinux/archlinux-docker
+
+test-repro:secure:
+  extends: .test_repro
+  tags:
+    - secure
+    - vm
+  only:
+    - master@archlinux/archlinux-docker
+    - schedules@archlinux/archlinux-docker
 
 # Build and publish to the Arch Linux group namespaces:
 # https://hub.docker.com/r/archlinux/archlinux
