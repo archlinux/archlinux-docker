@@ -14,7 +14,7 @@ $(OUTPUTDIR)/%.tar.zst:
 
 .PRECIOUS: $(OUTPUTDIR)/Dockerfile.%
 $(OUTPUTDIR)/Dockerfile.%: $(OUTPUTDIR)/%.tar.zst
-	scripts/make-dockerfile.sh "$(*).tar.zst" $(*) $(OUTPUTDIR) "true" "Dev"
+	scripts/make-dockerfile.sh "$(*).tar.zst" $(*) $(OUTPUTDIR) "true" "Dev" $(SOURCE_DATE_EPOCH)
 
 # The following is for local builds only, it is not used by the CI/CD pipeline
 
