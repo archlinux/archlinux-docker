@@ -107,13 +107,15 @@ rootfs:secure:
       aud: sigstore
   script:
     - |
-      REPRO_ARGS=""
       if [[ "$GROUP" == "repro" ]]; then
-        SOURCE_DATE_EPOCH=$(date -u -d "-1 day" +%s)
-        REPRO_ARGS="--source-date-epoch=${SOURCE_DATE_EPOCH} --rewrite-timestamp"
+        SOURCE_DATE_EPOCH=$(date -u -d "today 00:00:00" +%s)
+        REPRO_ARGS=(
+          --source-date-epoch=${SOURCE_DATE_EPOCH}
+          --rewrite-timestamp
+        )
       fi
       podman build \
-        $REPRO_ARGS \
+        "${REPRO_ARGS[@]}" \
         -f "$CI_PROJECT_DIR/output/Dockerfile.$GROUP" \
         -t "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG" \
         "$CI_PROJECT_DIR/output"
@@ -160,16 +162,20 @@ image:build:secure:
     - diffoscope output/repro.tar.zst repro-output/repro.tar.zst
     - echo "RootFS is reproducible!"
     - |
-      SOURCE_DATE_EPOCH=$(date -u -d "-1 day" +%s)
+      SOURCE_DATE_EPOCH=$(date -u -d "today 00:00:00" +%s)
       podman build \
         --no-cache \
         --source-date-epoch=${SOURCE_DATE_EPOCH} \
         --rewrite-timestamp \
         -f "$CI_PROJECT_DIR/repro-output/Dockerfile.repro" \
-        -t "archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG" \
+        -t "archlinux-docker:repro-$CI_COMMIT_REF_SLUG" \
         "$CI_PROJECT_DIR/repro-output"
-    - podman pull "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
-    - diffoci diff --semantic podman://$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG podman://localhost/archlinux:repro-rebuild-$CI_COMMIT_REF_SLUG
+    - podman pull $CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG
+    - echo "Digest of the original image is:"
+    - podman inspect --format '{{.Digest}}' "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
+    - echo "Digest of the rebuilt image is:"
+    - podman inspect --format '{{.Digest}}' "localhost/archlinux-docker:repro-$CI_COMMIT_REF_SLUG"
+    - diffoci diff --semantic --verbose podman://$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG podman://localhost/archlinux-docker:repro-$CI_COMMIT_REF_SLUG
     - echo "Image is reproducible!"
   artifacts:
     paths:
