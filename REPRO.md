@@ -21,27 +21,45 @@ Install the following Arch Linux packages:
 * diffoscope (to optionally check the reproducibility of the rootFS)
 * diffoci
 
-## Set required environment variables
+## Prepare the build environment
 
 Prepare the build environment by setting the following environment variables:
 
-* IMAGE_BUILD_DATE: The build date of the `repro` image you want to reproduce.
+* `BUILD_VERSION`: The build version of the `repro` image you want to reproduce.
 For instance, if you're aiming to reproduce the `repro-20260331.0.508794` image:
-   * `export IMAGE_BUILD_DATE="20260331"`
-* IMAGE_BUILD_NUMBER: The build number of the `repro` image you want to reproduce.
-For instance, if you're aiming to reproduce the `repro-20260331.0.508794` image:
-   * `export IMAGE_BUILD_NUMBER="0.508794"`
-* ARCHIVE_SNAPSHOT: The date of the Arch Linux repository archive snaphot to build
-the image against. This is based on the `IMAGE_BUILD_DATE`:
-   * `export ARCHIVE_SNAPSHOT=$(date -d "${IMAGE_BUILD_DATE} -1 day" +"%Y/%m/%d")`
-* SOURCE_DATE_EPOCH: The value to normalize timestamps with during the build.
-This is based on the `IMAGE_BUILD_DATE`:
-   * `export SOURCE_DATE_EPOCH=$(date -u -d "${IMAGE_BUILD_DATE} 00:00:00" +"%s")`
+
+```bash
+export BUILD_VERSION="20260331.0.508794"
+```
+
+* `ARCHIVE_SNAPSHOT`: The date of the Arch Linux repository archive snaphot to build
+the image against. This is based on the date included in the image's `BUILD_VERSION`:
+
+```bash
+export ARCHIVE_SNAPSHOT=$(date -d "${BUILD_VERSION%%.*} -1 day" +"%Y/%m/%d")
+```
+
+* `SOURCE_DATE_EPOCH`: The value to normalize timestamps with during the build.
+This is based on the date included in the image's `BUILD_VERSION`:
+
+```bash
+export SOURCE_DATE_EPOCH=$(date -u -d "${BUILD_VERSION%%.*} 00:00:00" +"%s")
+```
+
+Then clone the [archlinux-docker](https://gitlab.archlinux.org/archlinux/archlinux-docker)
+repository and move into it:
+
+```bash
+git clone https://gitlab.archlinux.org/archlinux/archlinux-docker.git
+cd archlinux-docker
+```
+
+Note that all the following instructions assumes that you are at the root of the
+archlinux-docker repository cloned above.
 
 ## Build the rootFS and generate the Dockerfile
 
-From a clone of the [archlinux-docker](https://gitlab.archlinux.org/archlinux/archlinux-docker)
-repository, build the rootFS with the required parameters:
+Build the rootFS with the required parameters:
 
 ```bash
 make \
@@ -58,18 +76,22 @@ The following built artifact will be located in `$PWD/output`:
 
 ## Optional - Check the rootFS reproducibility
 
-At that point, if the above artifacts built for the image you're aiming to reproduce
-are still available for download from the
-[archlinux-docker pipelines](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/pipelines)
-artifacts, you can optionally compare the content of the `repro.tar.zst.SHA256`
+At that point, if the artifacts built for the image you're aiming to reproduce
+are still available for download from the rootfs stage of the corresponding
+[archlinux-docker pipeline](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/pipelines)
+, you can optionally compare the content of the `repro.tar.zst.SHA256`
 file from the pipeline to the one generated during the above local build (which
 should be the same, indicating that the rootFS has been successfully reproduced).
 
 Additionally, you can check differences between the `repro.tar.zst` tarball from
-the pipeline and the one built during your local build with `diffoscope`:  
-`diffoscope /tmp/repro.tar.zst $PWD/output/repro.tar.zst` *(where `/tmp/repro.tar.zst`
-is the rootFS tarball downloaded from the pipeline and `$PWD/output/repro.tar.zst` is
-the rootFS tarball you just built)*.  
+the pipeline and the one built during your local build with `diffoscope`
+*(where `/tmp/repro.tar.zst` is the rootFS tarball downloaded from the pipeline and
+`$PWD/output/repro.tar.zst` is the rootFS tarball you just built)*:
+
+```bash
+diffoscope /tmp/repro.tar.zst $PWD/output/repro.tar.zst
+```
+
 This should show no difference, acting as additional indicator that the rootFS has been 
 successfully reproduced.
 
@@ -84,24 +106,27 @@ podman build \
     --source-date-epoch=$SOURCE_DATE_EPOCH \
     --rewrite-timestamp \
     -f "$PWD/output/Dockerfile.repro" \
-    -t "archlinux-docker:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}" \
+    -t "archlinux:repro-$BUILD_VERSION" \
     "$PWD/output"
 ```
 
 The built image will be accessible in your local podman container storage under the name:
-`localhost/archlinux-docker:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}`.
+`localhost/archlinux:repro-$BUILD_VERSION`.
 
 ## Check the image reproducibility
 
 Pull the image you're aiming at reproducing from Docker Hub:
-`podman pull docker.io/archlinux/archlinux:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}`
+
+```bash
+podman pull docker.io/archlinux/archlinux:repro-$BUILD_VERSION
+```
 
 Compare the digest of the image pulled from Docker Hub to the digest of the image you built
 locally:
 
 ```bash
-podman inspect --format '{{.Digest}}' docker.io/archlinux/archlinux:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}
-podman inspect --format '{{.Digest}}' localhost/archlinux-docker:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}
+podman inspect --format '{{.Digest}}' docker.io/archlinux/archlinux:repro-$BUILD_VERSION
+podman inspect --format '{{.Digest}}' localhost/archlinux:repro-$BUILD_VERSION
 ```
 
 Both digests should be identical, indicating that the image has been successfully reproduced.
@@ -110,7 +135,7 @@ Additionally, you can check difference between the image pulled from Docker Hub 
 the image you built locally with `diffoci`:
 
 ```bash
-diffoci diff --semantic --verbose podman://docker.io/archlinux/archlinux:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER} podman://localhost/archlinux-docker:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}
+diffoci diff --semantic --verbose podman://docker.io/archlinux/archlinux:repro-$BUILD_VERSION podman://localhost/archlinux:repro-$BUILD_VERSION
 ```
 
 This should show no difference, acting as additional indicator that the image has been
@@ -119,29 +144,26 @@ successfully reproduced *(see the following section about the `--semantic` flag 
 ### Note about `diffoci` requiring the `--semantic` flag (a.k.a "non-strict" mode)
 
 Docker / Podman does not allow to have two images with the same name & tag combination stored
-locally, [preventing them to be checked with `diffoci` as-is](https://github.com/reproducible-containers/diffoci/issues/74).
+locally, [making it impossible to check two images with the same name with
+`diffoci`](https://github.com/reproducible-containers/diffoci/issues/74) by cascade.
 To work around this limitation, one of the two image has to be named differently, whether by
-setting a different name / tag combination at build time or by renaming it post-build
-with e.g. `podman tag`.
+setting a different name / tag combination at build time (as done in this guide) or by renaming
+it post-build with e.g. `podman tag`.
 
 However, the image name & tag combination is automatically reported (and updated in the case
 of a renaming) in the image annotations / metadata and it's apparently not possible to fully overwrite
 it during build or update it post-build in a straightforward way.  
 This introduces unavoidable non-determinism
-in the image annotations / metadata that `diffoci` will report by default.  
-See for instance the following `diffoci` output (with the reported difference being introduced by
-using `podman tag` to "rename" one of the images with the "-orig" suffix, in order to avoid name collision):
+in the image annotations / metadata that `diffoci` will therefore systematically report by default.  
+See for instance the following `diffoci` output reporting a difference in the image name annotation:
 
 ```
 Event: "DescriptorMismatch" (field "Annotations")
   map[string]string{
-  	"io.containerd.image.name": strings.Join({
-  		"registry.archlinux.org/archlinux/archlinux-docker:repro-repro",
-- 		"-orig",
-  	}, ""),
-- 	"org.opencontainers.image.ref.name": "repro-repro-orig",
-+ 	"org.opencontainers.image.ref.name": "repro-repro",
-  }
+        "io.containerd.image.name": strings.Join({
+-               "docker.io/archlinux/archlinux:repro-20260331.0.508794",
++               "localhost/archlinux:repro-20260331.0.508794",
+        }, ""),
 ```
 
 Given that it's currently not possible to have two images with the same name & tag
@@ -154,12 +176,12 @@ This is why we are "forced" to run `diffoci` with the `--semantic` flag
 which ignores some attributes, including image name annotations.
 
 While having to run `diffoci` with the `--semantic` flag (for the lack of another option)
-just to workaround this image naming technical constraint is unfortunate, we can attest that:
+just to workaround this technical constraint is unfortunate, we can attest that:
 
 * This limitation is specific to metadata handling in container tooling and does not
 affect the actual filesystem contents or runtime behavior of the image.
-* The reported difference in the image name annotations is (or is supposed to be, at least) the **only**
-difference being reported when comparing the two images.
-* These image name annotations are not part of the hashed object when generating the image digest,
-meaning that this difference does not go in the way of digest equality between the two images (allowing
+* The reported difference in the image name annotation when running `diffoci` in default / strict mode
+is (or is supposed to be, at least) the **only** difference being reported when comparing the two images.
+* This image name annotation is not part of the hashed object when generating the image digest,
+meaning that this difference does not prevent digest equality between the two images (allowing
 us to claim bit for bit reproducibility regardless).
