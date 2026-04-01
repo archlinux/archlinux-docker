@@ -27,21 +27,21 @@ Prepare the build environment by setting the following environment variables:
 
 * IMAGE_BUILD_DATE: The build date of the `repro` image you want to reproduce.
 For instance, if you're aiming to reproduce the `repro-20260331.0.508794` image:
-`export IMAGE_BUILD_DATE="20260331"`
+   * `export IMAGE_BUILD_DATE="20260331"`
 * IMAGE_BUILD_NUMBER: The build number of the `repro` image you want to reproduce.
 For instance, if you're aiming to reproduce the `repro-20260331.0.508794` image:
-`export IMAGE_BUILD_NUMBER="0.508794"`
+   * `export IMAGE_BUILD_NUMBER="0.508794"`
 * ARCHIVE_SNAPSHOT: The date of the Arch Linux repository archive snaphot to build
 the image against. This is based on the `IMAGE_BUILD_DATE`:
-`export ARCHIVE_SNAPSHOT=$(date -d "${IMAGE_BUILD_DATE} -1 day" +"%Y/%m/%d")`
+   * `export ARCHIVE_SNAPSHOT=$(date -d "${IMAGE_BUILD_DATE} -1 day" +"%Y/%m/%d")`
 * SOURCE_DATE_EPOCH: The value to normalize timestamps with during the build.
 This is based on the `IMAGE_BUILD_DATE`:
-`export SOURCE_DATE_EPOCH=$(date -u -d "${IMAGE_BUILD_DATE} 00:00:00" +"%s")`
+   * `export SOURCE_DATE_EPOCH=$(date -u -d "${IMAGE_BUILD_DATE} 00:00:00" +"%s")`
 
 ## Build the rootFS and generate the Dockerfile
 
 From a clone of the [archlinux-docker](https://gitlab.archlinux.org/archlinux/archlinux-docker)
-repository, build the rootFS with the required paramaters:
+repository, build the rootFS with the required parameters:
 
 ```bash
 make \
@@ -66,20 +66,16 @@ file from the pipeline to the one generated during the above local build (which
 should be the same, indicating that the rootFS has been successfully reproduced).
 
 Additionally, you can check differences between the `repro.tar.zst` tarball from
-the pipeline and the one built during your local build with `diffoscope`:
-`diffoscope /tmp/repro.tar.zst $PWD/output/repro.tar.zst` (where `/tmp/repro.tar.zst`
+the pipeline and the one built during your local build with `diffoscope`:  
+`diffoscope /tmp/repro.tar.zst $PWD/output/repro.tar.zst` *(where `/tmp/repro.tar.zst`
 is the rootFS tarball downloaded from the pipeline and `$PWD/output/repro.tar.zst` is
-the rootFS tarball you just built.  
+the rootFS tarball you just built)*.  
 This should show no difference, acting as additional indicator that the rootFS has been 
 successfully reproduced.
 
-If the artifacts have already expired from the
-[archlinux-docker pipelines](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/pipelines)
-artifacts, that's not a big deal. You are still able to check the reproducibility of the image itself.
-
 ## Build the image
 
-You can now (re)build the image against the rootFS and Dockerfile generated in the previous step.  
+You can now (re)build the image against the rootFS and the Dockerfile generated in the previous step.  
 To do so, build the image with the required parameters:
 
 ```bash
@@ -110,11 +106,15 @@ podman inspect --format '{{.Digest}}' localhost/archlinux-docker:repro-${IMAGE_B
 
 Both digests should be identical, indicating that the image has been successfully reproduced.
 
-Additionally, you can check difference between the images pulled from Docker Hub and
-the image you built with `diffoci`:
-`diffoci diff --semantic --verbose podman://docker.io/archlinux/archlinux:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER} podman://localhost/archlinux-docker:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}`  
+Additionally, you can check difference between the image pulled from Docker Hub and
+the image you built locally with `diffoci`:
+
+```bash
+diffoci diff --semantic --verbose podman://docker.io/archlinux/archlinux:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER} podman://localhost/archlinux-docker:repro-${IMAGE_BUILD_DATE}.${IMAGE_BUILD_NUMBER}
+```
+
 This should show no difference, acting as additional indicator that the image has been
-successfully reproduced (see the following section about the `--semantic` flag requirement).
+successfully reproduced *(see the following section about the `--semantic` flag requirement)*.
 
 ### Note about `diffoci` requiring the `--semantic` flag (a.k.a "non-strict" mode)
 
@@ -126,10 +126,11 @@ with e.g. `podman tag`.
 
 However, the image name & tag combination is automatically reported (and updated in the case
 of a renaming) in the image annotations / metadata and it's apparently not possible to fully overwrite
-it during build or update it post-build in a straightforward way. This introduces unavoidable non-determinism
+it during build or update it post-build in a straightforward way.  
+This introduces unavoidable non-determinism
 in the image annotations / metadata that `diffoci` will report by default.  
 See for instance the following `diffoci` output (with the reported difference being introduced by
-using `podman tag` to "rename" one of the images with the "-rebuild" suffix, in order to avoid name collision):
+using `podman tag` to "rename" one of the images with the "-orig" suffix, in order to avoid name collision):
 
 ```
 Event: "DescriptorMismatch" (field "Annotations")
