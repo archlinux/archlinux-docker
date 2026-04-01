@@ -1,12 +1,32 @@
 # Reproducing the `repro` image
 
-The `repro` image is a bit for bit [reproducible build](https://reproducible-builds.org/)
-of the `base` image.  
+The `repro` image provides a bit for bit [reproducible build](https://reproducible-builds.org)
+of the `base` image.
+
 Note that, to ensure reproducibility, the pacman keys are stripped from this
 image, so you're expected to run `pacman-key --init && pacman-key --populate archlinux`
-before being able to update the system and install packages via `pacman`.
+before being able to update the system and install packages via `pacman` when using this image.
 
 To reproduce the `repro` image locally, follow the below instructions.
+
+## Disclaimer
+
+Reproducible builds [expect the same build environment across builds](https://reproducible-builds.org/docs/definition/).  
+
+While it *should* be fine in most cases, this means we cannot guarantee that you will always be able
+to successfully reproduce a specific image locally over time.
+
+Technically speaking, the older the image you're trying to reproduce is, the more chance there is
+to have more or less significant differences between your build environment
+and the one used to build the original image (for instance in terms of packages versions).  
+Such differences can affect the build (and the resulting artifacts). Please note that failing to
+reproduce an image locally does not necessarily mean that it isn't reproducible per se, but can
+just be the result of significant enough differences between your build environment and the one
+used to build the original image.
+
+You can avoid (or mitigate) eventual issues due to such differences by restoring all packages
+of your build environment to the build date of the original image (see the [related instructions
+from the Arch Wiki](https://wiki.archlinux.org/title/Arch_Linux_Archive#Restore_all_packages_to_a_specific_date)).
 
 ## Dependencies
 
