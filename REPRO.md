@@ -1,4 +1,4 @@
-# Reproducing the `repro` image
+# Reproducing a `repro` image locally
 
 The `repro` image provides a bit for bit [reproducible build](https://reproducible-builds.org)
 of the `base` image.
@@ -11,7 +11,7 @@ To reproduce the `repro` image locally, follow the below instructions.
 
 ## Disclaimer
 
-Reproducible builds [expect the same build environment across builds](https://reproducible-builds.org/docs/definition/).  
+Reproducible builds [expect the same build environment across builds](https://reproducible-builds.org/docs/definition/).
 
 While it *should* be fine in most cases, this means we cannot guarantee that you will always be able
 to successfully reproduce a specific image locally over time.
@@ -33,8 +33,8 @@ from the Arch Wiki](https://wiki.archlinux.org/title/Arch_Linux_Archive#Restore_
 Install the following Arch Linux packages:
 
 * make
-* devtools (for the pacman.conf files)
-* git (to fetch the commit/revision number)
+* devtools
+* git
 * podman
 * fakechroot
 * fakeroot
@@ -74,7 +74,7 @@ git clone https://gitlab.archlinux.org/archlinux/archlinux-docker.git
 cd archlinux-docker
 ```
 
-Note that all the following instructions assumes that you are at the root of the
+Note that all the following instructions assume that you are at the root of the
 archlinux-docker repository cloned above.
 
 ## Build the rootFS and generate the Dockerfile
@@ -88,7 +88,7 @@ make \
     $PWD/output/Dockerfile.repro
 ```
 
-The following built artifact will be located in `$PWD/output`:
+The following resulting artifacts will be located in `$PWD/output`:
 
 * repro.tar.zst (the rootFS)
 * repro.tar.zst.SHA256 (sha256 hash of the rootFS)
@@ -100,19 +100,19 @@ At that point, if the artifacts built for the image you're aiming to reproduce
 are still available for download from the rootfs stage of the corresponding
 [archlinux-docker pipeline](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/pipelines)
 , you can optionally compare the content of the `repro.tar.zst.SHA256`
-file from the pipeline to the one generated during the above local build (which
+file from the pipeline to the one generated during your local build (which
 should be the same, indicating that the rootFS has been successfully reproduced).
 
 Additionally, you can check differences between the `repro.tar.zst` tarball from
 the pipeline and the one built during your local build with `diffoscope`
 *(where `/tmp/repro.tar.zst` is the rootFS tarball downloaded from the pipeline and
-`$PWD/output/repro.tar.zst` is the rootFS tarball you just built)*:
+`$PWD/output/repro.tar.zst` is the rootFS tarball built during your local build in the following example)*:
 
 ```bash
 diffoscope /tmp/repro.tar.zst $PWD/output/repro.tar.zst
 ```
 
-This should show no difference, acting as additional indicator that the rootFS has been 
+This should return no difference, acting as additional indicator that the rootFS has been 
 successfully reproduced.
 
 ## Build the image
@@ -135,7 +135,7 @@ The built image will be accessible in your local podman container storage under 
 
 ## Check the image reproducibility
 
-Pull the image you're aiming at reproducing from Docker Hub:
+Pull the image you're aiming to reproduce from Docker Hub:
 
 ```bash
 podman pull docker.io/archlinux/archlinux:repro-$BUILD_VERSION

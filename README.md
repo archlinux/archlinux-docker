@@ -74,9 +74,9 @@ There are multiple `make image-XXX` targets, where each creates the
 respective `archlinux:XXX` image based on the corresponding meta package.
 Currently those include `base`, `base-devel`, `multilib-devel` and `repro`.
 
-### Reproducing the `repro` image
+### Reproducing a `repro` image
 
-To reproduce the `repro` image locally, follow the instructions
+To reproduce a `repro` image locally, follow the instructions
 in [REPRO.md](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/REPRO.md).
 
 ## Pipeline
