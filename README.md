@@ -14,8 +14,8 @@ Arch Linux provides OCI-Compliant container images in multiple repositories:
 
 Four versions of the image are provided: `base` (approx. 150 MiB), `base-devel`
 (approx. 260 MiB) and `multilib-devel` (approx. 300MiB) containing the
-respective meta package; and `repro` which is a bit for bit reproducible image
-based on the `base` version (note that, to ensure reproducibility, the pacman keys 
+respective meta package; and `repro` which is a bit for bit reproducible version
+of the `base` image (note that, to ensure reproducibility, the pacman keys
 are stripped from this image so you're expected to run 
 `pacman-key --init && pacman-key --populate archlinux` before being able to update 
 the system and install packages via `pacman`).  
@@ -73,6 +73,11 @@ Make sure your user can directly interact with Podman (i.e. `podman info` works)
 There are multiple `make image-XXX` targets, where each creates the
 respective `archlinux:XXX` image based on the corresponding meta package.
 Currently those include `base`, `base-devel`, `multilib-devel` and `repro`.
+
+### Reproducing the `repro` image
+
+To reproduce the `repro` image locally, follow the instructions
+in [REPRO.md](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/REPRO.md).
 
 ## Pipeline
 
