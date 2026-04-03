@@ -106,6 +106,8 @@ rootfs:secure:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   script:
+    - echo -e '[aliases]\n  "alpine" = ""' > /etc/containers/registries.conf.d/99-no-alpine-alias.conf
+    - echo 'unqualified-search-registries = ["mirror.gcr.io", "docker.io"]' > /etc/containers/registries.conf
     - |
       if [[ "$GROUP" == "repro" ]]; then
         SOURCE_DATE_EPOCH=$(date -u -d "00:00:00" +%s)
@@ -161,6 +163,8 @@ image:build:secure:
     - cat repro-output/repro.tar.zst.SHA256
     - diffoscope output/repro.tar.zst repro-output/repro.tar.zst
     - echo "RootFS is reproducible!"
+    - echo -e '[aliases]\n  "alpine" = ""' > /etc/containers/registries.conf.d/99-no-alpine-alias.conf
+    - echo 'unqualified-search-registries = ["mirror.gcr.io", "docker.io"]' > /etc/containers/registries.conf
     - |
       SOURCE_DATE_EPOCH=$(date -u -d "00:00:00" +%s)
       podman build \
@@ -221,6 +225,8 @@ image:publish:secure:
     - podman login -u "$GHCR_USERNAME" -p "$GHCR_PASSWORD" "ghcr.io"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
   script:
+    - echo -e '[aliases]\n  "alpine" = ""' > /etc/containers/registries.conf.d/99-no-alpine-alias.conf
+    - echo 'unqualified-search-registries = ["mirror.gcr.io", "docker.io"]' > /etc/containers/registries.conf
     - |
       if [[ "$GROUP" == "repro" ]]; then
         SOURCE_DATE_EPOCH=$(date -u -d "00:00:00" +%s)
