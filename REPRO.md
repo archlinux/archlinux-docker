@@ -164,8 +164,8 @@ successfully reproduced *(see the following section about the `--semantic` flag 
 ### Note about `diffoci` requiring the `--semantic` flag (a.k.a "non-strict" mode)
 
 Docker / Podman does not allow to have two images with the same name & tag combination stored
-locally, [making it impossible to check two images with the same name with
-`diffoci`](https://github.com/reproducible-containers/diffoci/issues/74) by cascade.
+locally, [making it impossible to compare two images with the same name with
+`diffoci`](https://github.com/reproducible-containers/diffoci/issues/74).
 To work around this limitation, one of the two image has to be named differently, whether by
 setting a different name / tag combination at build time (as done in this guide) or by renaming
 it post-build with e.g. `podman tag`.
@@ -173,7 +173,7 @@ it post-build with e.g. `podman tag`.
 However, the image name & tag combination is automatically reported (and updated in the case
 of a renaming) in the image annotations / metadata and it's apparently not possible to fully overwrite
 it during build or update it post-build in a straightforward way.  
-This introduces unavoidable non-determinism
+This introduces unavoidable differences
 in the image annotations / metadata that `diffoci` will therefore systematically report by default.  
 See for instance the following `diffoci` output reporting a difference in the image name annotation:
 
@@ -190,7 +190,7 @@ Given that it's currently not possible to have two images with the same name & t
 combination stored locally and that it's also not possible to "normalize" the related
 annotations / metadata during (or after) the build, we are not aware of a way to get a
 fully successful `diffoci` output in default / strict mode (i.e., with *absolutely* no
-reported differences).  
+reported differences, see the [related upstream report](https://github.com/reproducible-containers/diffoci/issues/266)).  
 This is why we are "forced" to run `diffoci` with the `--semantic` flag
 ([a.k.a "non-strict" mode](https://github.com/reproducible-containers/diffoci?tab=readme-ov-file#non-strict-aka-semantic-mode)),
 which ignores some attributes, including image name annotations.
