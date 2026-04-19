@@ -221,9 +221,18 @@ image:publish:secure:
     - podman login -u "$GHCR_USERNAME" -p "$GHCR_PASSWORD" "ghcr.io"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
   script:
-    - podman build
-        -f "$CI_PROJECT_DIR/Dockerfile.$GROUP"
-        -t "archlinux:$GROUP-$BUILD_VERSION"
+    - |
+      if [[ "$GROUP" == "repro" ]]; then
+        SOURCE_DATE_EPOCH=$(date -u -d "today 00:00:00" +%s)
+        REPRO_ARGS=(
+          --source-date-epoch=${SOURCE_DATE_EPOCH}
+          --rewrite-timestamp
+        )
+      fi
+      podman build \
+        "${REPRO_ARGS[@]}" \
+        -f "$CI_PROJECT_DIR/Dockerfile.$GROUP" \
+        -t "archlinux:$GROUP-$BUILD_VERSION" \
         "$CI_PROJECT_DIR"
     - |
       for host in "docker.io" "quay.io" "ghcr.io"; do
