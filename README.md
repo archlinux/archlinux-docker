@@ -12,11 +12,16 @@ Arch Linux provides OCI-Compliant container images in multiple repositories:
 * [Daily in our ghcr.io repository][ghcr-containers]:
 `podman pull ghcr.io/archlinux/archlinux:latest` or `docker pull ghcr.io/archlinux/archlinux:latest`
 
-Three versions of the image are provided: `base` (approx. 150 MiB), `base-devel`
+Four versions of the image are provided: `base` (approx. 150 MiB), `base-devel`
 (approx. 260 MiB) and `multilib-devel` (approx. 300MiB) containing the
-respective meta package. All of them are available as
-tags with `latest` pointing to `base`. Additionally, images are tagged with their
-date and build job number, f.e. `base-devel-20201118.0.9436`.
+respective meta package; and `repro` which is a bit for bit reproducible version
+of the `base` image (note that, to ensure reproducibility, the pacman keys
+are stripped from this image so you're expected to run 
+`pacman-key --init && pacman-key --populate archlinux` before being able to update 
+the system and install packages via `pacman`).  
+All of them are available as tags with `latest` pointing to `base`.
+Additionally, images are tagged with their date and build job number, 
+f.e. `base-devel-20201118.0.9436`.
 
 While the images are regularly kept up to date it is strongly recommended
 running `pacman -Syu` right after starting a container due to the rolling
@@ -35,7 +40,7 @@ $ cosign verify ghcr.io/archlinux/archlinux:latest --certificate-identity-regexp
 * Provide the Arch experience in a Docker image
 * Provide the simplest but complete image to `base`, `base-devel` and
 `multilib-devel` on a regular basis
-* `pacman` needs to work out of the box
+* `pacman` needs to work out of the box (with the exception of the `repro` image, while we are working on technical contstrains)
 * All installed packages have to be kept unmodified
 
 >>>
@@ -67,7 +72,12 @@ Make sure your user can directly interact with Podman (i.e. `podman info` works)
 ### Usage
 There are multiple `make image-XXX` targets, where each creates the
 respective `archlinux:XXX` image based on the corresponding meta package.
-Currently those include `base`, `base-devel` and `multilib-devel`.
+Currently those include `base`, `base-devel`, `multilib-devel` and `repro`.
+
+### Reproducing a `repro` image
+
+To reproduce a `repro` image locally, follow the instructions
+in [REPRO.md](https://gitlab.archlinux.org/archlinux/archlinux-docker/-/blob/master/REPRO.md).
 
 ## Pipeline
 
