@@ -6,6 +6,7 @@ stages:
   - lint
   - rootfs
   - image
+  - repro
   - test
   - pre-release
   - release
@@ -61,7 +62,7 @@ get_version:
   stage: rootfs
   parallel:
     matrix:
-      - GROUP: [base, base-devel, multilib-devel]
+      - GROUP: [base, base-devel, multilib-devel, repro]
   before_script:
     - pacman -Syu --noconfirm git make fakechroot fakeroot
     - pacman -Sdd --noconfirm devtools
@@ -98,16 +99,25 @@ rootfs:secure:
   stage: image
   parallel:
     matrix:
-      - GROUP: [base, base-devel, multilib-devel]
+      - GROUP: [base, base-devel, multilib-devel, repro]
   tags:
     - vm
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   script:
-    - podman build
-        -f "$CI_PROJECT_DIR/output/Dockerfile.$GROUP"
-        -t "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG"
+    - |
+      if [[ "$GROUP" == "repro" ]]; then
+        SOURCE_DATE_EPOCH=$(date -u -d "00:00:00" +%s)
+        REPRO_ARGS=(
+          --source-date-epoch=${SOURCE_DATE_EPOCH}
+          --rewrite-timestamp
+        )
+      fi
+      podman build \
+        "${REPRO_ARGS[@]}" \
+        -f "$CI_PROJECT_DIR/output/Dockerfile.$GROUP" \
+        -t "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG" \
         "$CI_PROJECT_DIR/output"
     - podman push --sign-by-sigstore=<(sed "s/TEMPLATE_OIDC_ID_TOKEN/${SIGSTORE_ID_TOKEN}/" sigstore-param-file.yaml) "$CI_REGISTRY_IMAGE:$GROUP-$CI_COMMIT_REF_SLUG"
 
@@ -138,6 +148,61 @@ image:build:secure:
     - podman login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
 
+.test_repro:
+  stage: repro
+  before_script:
+    - pacman -Syu --noconfirm git make fakechroot fakeroot podman diffoscope diffoci
+    - pacman -Sdd --noconfirm devtools
+  script:
+    - make BUILDDIR="$PWD/repro-build" OUTPUTDIR="$PWD/repro-output" $PWD/repro-output/Dockerfile.repro
+    - echo "The sha256 hash of the original rootFS is:"
+    - cat output/repro.tar.zst.SHA256
+    - echo "The sha256 hash of the rebuilt rootFS is:"
+    - cat repro-output/repro.tar.zst.SHA256
+    - diffoscope output/repro.tar.zst repro-output/repro.tar.zst
+    - echo "RootFS is reproducible!"
+    - |
+      SOURCE_DATE_EPOCH=$(date -u -d "00:00:00" +%s)
+      podman build \
+        --no-cache \
+        --source-date-epoch=${SOURCE_DATE_EPOCH} \
+        --rewrite-timestamp \
+        -f "$CI_PROJECT_DIR/repro-output/Dockerfile.repro" \
+        -t "archlinux-docker:repro-$CI_COMMIT_REF_SLUG" \
+        "$CI_PROJECT_DIR/repro-output"
+    - podman pull $CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG
+    - echo "Digest of the original image is:"
+    - podman inspect --format '{{.Digest}}' "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
+    - echo "Digest of the rebuilt image is:"
+    - podman inspect --format '{{.Digest}}' "localhost/archlinux-docker:repro-$CI_COMMIT_REF_SLUG"
+    - diffoci diff --semantic --verbose podman://$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG podman://localhost/archlinux-docker:repro-$CI_COMMIT_REF_SLUG
+    - echo "Image is reproducible!"
+  artifacts:
+    paths:
+      - repro-output/*
+    exclude:
+      - repro-output/*.tar
+    expire_in: 2h
+
+test-repro:
+  extends: .test_repro
+  tags:
+    - vm
+  except:
+    - master@archlinux/archlinux-docker
+    - releases@archlinux/archlinux-docker
+    - schedules@archlinux/archlinux-docker
+    - tags@archlinux/archlinux-docker
+
+test-repro:secure:
+  extends: .test_repro
+  tags:
+    - secure
+    - vm
+  only:
+    - master@archlinux/archlinux-docker
+    - schedules@archlinux/archlinux-docker
+
 # Build and publish to the Arch Linux group namespaces:
 # https://hub.docker.com/r/archlinux/archlinux
 # https://quay.io/repository/archlinux/archlinux
@@ -156,9 +221,18 @@ image:publish:secure:
     - podman login -u "$GHCR_USERNAME" -p "$GHCR_PASSWORD" "ghcr.io"
     - 'echo -e "default-docker:\n  use-sigstore-attachments: true" > /etc/containers/registries.d/sigstore.yaml'
   script:
-    - podman build
-        -f "$CI_PROJECT_DIR/Dockerfile.$GROUP"
-        -t "archlinux:$GROUP-$BUILD_VERSION"
+    - |
+      if [[ "$GROUP" == "repro" ]]; then
+        SOURCE_DATE_EPOCH=$(date -u -d "00:00:00" +%s)
+        REPRO_ARGS=(
+          --source-date-epoch=${SOURCE_DATE_EPOCH}
+          --rewrite-timestamp
+        )
+      fi
+      podman build \
+        "${REPRO_ARGS[@]}" \
+        -f "$CI_PROJECT_DIR/Dockerfile.$GROUP" \
+        -t "archlinux:$GROUP-$BUILD_VERSION" \
         "$CI_PROJECT_DIR"
     - |
       for host in "docker.io" "quay.io" "ghcr.io"; do
@@ -209,6 +283,16 @@ test:base-devel:
     - test -u /usr/bin/sudo   # issue 70
     - test -u /usr/bin/passwd
 
+test:repro:
+  extends: .test
+  image: $CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG
+  script:
+    - pacman-key --init
+    - pacman-key --populate archlinux
+    - pacman -Syu --noconfirm arch-repro-status
+    - arch-repro-status
+    - *test-script
+
 pre-release:
   stage: pre-release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
@@ -226,6 +310,7 @@ pre-release:
     - apk add jq curl bash
   script:
     - |
+      source_date_epoch=$(date -u -d "00:00:00" +%s)
       echo "Update the description of our daily DockerHub repository at https://hub.docker.com/r/archlinux/archlinux"
       TOKEN="$(curl -X POST https://hub.docker.com/v2/users/login -H "Content-Type: application/json" -d "{\"username\": \"${DOCKERHUB_USERNAME}\", \"password\": \"${DOCKERHUB_PASSWORD}\"}" | jq -er .token)"
       curl -X PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ \
@@ -234,7 +319,7 @@ pre-release:
            -d "{\"full_description\": $(cat README.md | jq -sR .)}"
 
       # Upload rootfs to the Generic Packages Repository
-      for group in base base-devel multilib-devel; do
+      for group in base base-devel multilib-devel repro; do
         rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
         mv "output/${group}.tar.zst" "output/${rootfs_file}"
         mv "output/${group}.tar.zst.SHA256" "output/${rootfs_file}.SHA256"
@@ -246,9 +331,9 @@ pre-release:
       done
 
       # Create the Dockerfiles, commit to the release branch
-      for group in base base-devel multilib-devel; do
+      for group in base base-devel multilib-devel repro; do
         rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
-        ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}"
+        ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}" "${source_date_epoch}"
         sed -i "/^COPY ${rootfs_file} \/$/d" output/Dockerfile.${group}
       done
     # See README.md###Maintenance for notes about `GITLAB_PROJECT_TOKEN`
@@ -266,6 +351,9 @@ pre-release:
       --form "actions[][action]=update"
       --form "actions[][file_path]=Dockerfile.multilib-devel"
       --form "actions[][content]=<output/Dockerfile.multilib-devel"
+      --form "actions[][action]=update"
+      --form "actions[][file_path]=Dockerfile.repro"
+      --form "actions[][content]=<output/Dockerfile.repro"
       --form "actions[][action]=update"
       --form "actions[][file_path]=.gitlab-ci.yml"
       --form "actions[][content]=<.gitlab-ci.yml"
@@ -313,6 +401,10 @@ release:
           url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst'
         - name: 'multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
           url: '${PACKAGE_REGISTRY_URL}/multilib-devel-${BUILD_VERSION}.tar.zst.SHA256'
+        - name: 'repro-${BUILD_VERSION}.tar.zst'
+          url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst'
+        - name: 'repro-${BUILD_VERSION}.tar.zst.SHA256'
+          url: '${PACKAGE_REGISTRY_URL}/repro-${BUILD_VERSION}.tar.zst.SHA256'
 
 # Publish to the official Docker namespace: https://hub.docker.com/_/archlinux
 # Note: The description is maintained here: https://github.com/docker-library/docs/tree/master/archlinux
@@ -347,7 +439,7 @@ publish-dockerhub:
     - git checkout -b "$head"
     - cp ../docker-library.template library/archlinux
     - |
-      for group in base base-devel multilib-devel; do
+      for group in base base-devel multilib-devel repro; do
         test "${group}" = "base" && extra="latest, " || extra=""
         echo "Tags: ${extra}${group}, ${group}-${BUILD_VERSION}" >> library/archlinux
         echo "GitCommit: ${BUILD_COMMIT}" >> library/archlinux
