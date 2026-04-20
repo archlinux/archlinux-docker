@@ -155,13 +155,13 @@ Additionally, you can check difference between the image pulled from Docker Hub 
 the image you built locally with `diffoci`:
 
 ```bash
-diffoci diff --semantic --verbose podman://docker.io/archlinux/archlinux:repro-$BUILD_VERSION podman://localhost/archlinux:repro-$BUILD_VERSION
+diffoci diff --ignore-image-name --verbose podman://docker.io/archlinux/archlinux:repro-$BUILD_VERSION podman://localhost/archlinux:repro-$BUILD_VERSION
 ```
 
 This should show no difference, acting as additional indicator that the image has been
-successfully reproduced *(see the following section about the `--semantic` flag requirement)*.
+successfully reproduced *(see the following section about the `--ignore-image-name` flag requirement)*.
 
-### Note about `diffoci` requiring the `--semantic` flag (a.k.a "non-strict" mode)
+### Note about the necessity of the `--ignore-image-name` flag with `diffoci`
 
 Docker / Podman does not allow to have two images with the same name & tag combination stored
 locally, [making it impossible to compare two images with the same name with
@@ -171,10 +171,10 @@ setting a different name / tag combination at build time (as done in this guide)
 it post-build with e.g. `podman tag`.
 
 However, the image name & tag combination is automatically reported (and updated in the case
-of a renaming) in the image annotations / metadata and it's apparently not possible to fully overwrite
+of a renaming) in the image annotations and it's not possible to fully overwrite
 it during build or update it post-build in a straightforward way.  
-This introduces unavoidable differences
-in the image annotations / metadata that `diffoci` will therefore systematically report by default.  
+This unavoidably introduces non-deterministic data in the image name annotations
+that `diffoci` will systematically report by default.  
 See for instance the following `diffoci` output reporting a difference in the image name annotation:
 
 ```
@@ -188,20 +188,16 @@ Event: "DescriptorMismatch" (field "Annotations")
 
 Given that it's currently not possible to have two images with the same name & tag
 combination stored locally and that it's also not possible to "normalize" the related
-annotations / metadata during (or after) the build, we are not aware of a way to get a
-fully successful `diffoci` output in default / strict mode (i.e., with *absolutely* no
-reported differences, see the [related upstream report](https://github.com/reproducible-containers/diffoci/issues/266)).  
-This is why we are "forced" to run `diffoci` with the `--semantic` flag
-([a.k.a "non-strict" mode](https://github.com/reproducible-containers/diffoci?tab=readme-ov-file#non-strict-aka-semantic-mode)),
-which ignores some attributes, including image name annotations.
+annotations metadata during (or after) the build, we are currently [forced to ignore those with
+the `--ignore-image-name` flag](https://github.com/reproducible-containers/diffoci/issues/266)
+to workaround this technical constraint.
 
-While having to run `diffoci` with the `--semantic` flag (for the lack of another option)
-just to workaround this technical constraint is unfortunate, we can attest that:
+Regardless, we can attest that:
 
 * This limitation is specific to metadata handling in container tooling and does not
 affect the actual filesystem contents or runtime behavior of the image.
-* The reported difference in the image name annotation when running `diffoci` in default / strict mode
+* The reported difference in the image name annotation when running `diffoci` without the `--ignore-image-name` flag
 is (or is supposed to be, at least) the **only** difference being reported when comparing the two images.
-* This image name annotation is not part of the hashed object when generating the image digest,
+* The image name annotation metadata are not part of the hashed object when generating the image digest,
 meaning that this difference does not prevent digest equality between the two images (allowing
 us to claim bit for bit reproducibility regardless).
