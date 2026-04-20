@@ -310,6 +310,7 @@ pre-release:
     - apk add jq curl bash
   script:
     - |
+      source_date_epoch=$(date -u -d "today 00:00:00" +%s)
       echo "Update the description of our daily DockerHub repository at https://hub.docker.com/r/archlinux/archlinux"
       TOKEN="$(curl -X POST https://hub.docker.com/v2/users/login -H "Content-Type: application/json" -d "{\"username\": \"${DOCKERHUB_USERNAME}\", \"password\": \"${DOCKERHUB_PASSWORD}\"}" | jq -er .token)"
       curl -X PATCH https://hub.docker.com/v2/repositories/archlinux/archlinux/ \
@@ -332,7 +333,7 @@ pre-release:
       # Create the Dockerfiles, commit to the release branch
       for group in base base-devel multilib-devel repro; do
         rootfs_file="${group}-${BUILD_VERSION}.tar.zst"
-        ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}"
+        ./scripts/make-dockerfile.sh "${rootfs_file}" "${group}" "output" "curl -sOJL \"${PACKAGE_REGISTRY_URL}/${rootfs_file}\"" "${group}" "${source_date_epoch}"
         sed -i "/^COPY ${rootfs_file} \/$/d" output/Dockerfile.${group}
       done
     # See README.md###Maintenance for notes about `GITLAB_PROJECT_TOKEN`
