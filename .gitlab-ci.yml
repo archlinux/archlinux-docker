@@ -175,7 +175,7 @@ image:build:secure:
     - podman inspect --format '{{.Digest}}' "$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG"
     - echo "Digest of the rebuilt image is:"
     - podman inspect --format '{{.Digest}}' "localhost/archlinux-docker:repro-$CI_COMMIT_REF_SLUG"
-    - diffoci diff --semantic --verbose podman://$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG podman://localhost/archlinux-docker:repro-$CI_COMMIT_REF_SLUG
+    - diffoci diff --ignore-image-name --verbose podman://$CI_REGISTRY_IMAGE:repro-$CI_COMMIT_REF_SLUG podman://localhost/archlinux-docker:repro-$CI_COMMIT_REF_SLUG
     - echo "Image is reproducible!"
   artifacts:
     paths:
