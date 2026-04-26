@@ -9,6 +9,9 @@ declare -r DOWNLOAD="$4"
 declare -r TITLE="$5"
 declare -rx SOURCE_DATE_EPOCH="$6"
 
+# For eventual debugging purposes
+echo "SOURCE_DATE_EPOCH: ${SOURCE_DATE_EPOCH}"
+
 # Do not use these directly in the sed below - it will mask git failures
 BUILD_VERSION="${BUILD_VERSION:-dev}"
 CI_COMMIT_SHA="${CI_COMMIT_SHA:-$(git rev-parse HEAD)}"
