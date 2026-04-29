@@ -56,7 +56,7 @@ export BUILD_VERSION="20260331.0.508794"
 the image against. This is based on the date included in the image's `BUILD_VERSION`:
 
 ```bash
-export ARCHIVE_SNAPSHOT=$(date -d "${BUILD_VERSION%%.*} -1 day" +"%Y/%m/%d")
+export ARCHIVE_SNAPSHOT=$(date -u -d "${BUILD_VERSION%%.*} -1 day" +"%Y/%m/%d")
 ```
 
 * `SOURCE_DATE_EPOCH`: The value to normalize timestamps with during the build.
@@ -66,7 +66,14 @@ This is based on the date included in the image's `BUILD_VERSION`:
 export SOURCE_DATE_EPOCH=$(date -u -d "${BUILD_VERSION%%.*} 00:00:00" +"%s")
 ```
 
-Then clone the [archlinux-docker](https://gitlab.archlinux.org/archlinux/archlinux-docker)
+Then pull the original image you're aiming to reproduce and set its revision value in your environment (needed to correctly set the revision annotation in the Dockerfile):
+
+```bash
+podman pull docker.io/archlinux/archlinux:repro-$BUILD_VERSION
+export CI_COMMIT_SHA=$(podman inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' archlinux/archlinux:repro-$BUILD_VERSION)
+```
+
+Finally, clone the [archlinux-docker](https://gitlab.archlinux.org/archlinux/archlinux-docker)
 repository and move into it:
 
 ```bash
@@ -86,6 +93,8 @@ make \
     ARCHIVE_SNAPSHOT="$ARCHIVE_SNAPSHOT" \
     SOURCE_DATE_EPOCH="$SOURCE_DATE_EPOCH" \
     $PWD/output/Dockerfile.repro
+
+scripts/make-dockerfile.sh repro.tar.zst repro output/ "true" "repro" "$SOURCE_DATE_EPOCH"
 ```
 
 The following resulting artifacts will be located in `$PWD/output`:
@@ -135,13 +144,7 @@ The built image will be accessible in your local podman container storage under 
 
 ## Check the image reproducibility
 
-Pull the image you're aiming to reproduce from Docker Hub:
-
-```bash
-podman pull docker.io/archlinux/archlinux:repro-$BUILD_VERSION
-```
-
-Compare the digest of the image pulled from Docker Hub to the digest of the image you built
+Compare the digest of the original image pulled from Docker Hub to the digest of the image you built
 locally:
 
 ```bash

@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Fixed TZ to ensure consistency
+export TZ=UTC
+
 declare -r ROOTFS_FILE="$1"
 declare -r GROUP="$2"
 declare -r OUTPUTDIR="$3"

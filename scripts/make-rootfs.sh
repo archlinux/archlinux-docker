@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Fixed TZ to ensure consistency
+export TZ=UTC
+
 declare -r WRAPPER="fakechroot -- fakeroot"
 
 declare -r GROUP="$1"
