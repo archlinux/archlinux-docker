@@ -74,11 +74,12 @@ export CI_COMMIT_SHA=$(podman inspect --format '{{ index .Config.Labels "org.ope
 ```
 
 Finally, clone the [archlinux-docker](https://gitlab.archlinux.org/archlinux/archlinux-docker)
-repository and move into it:
+repository, move into it and checkout to the state of the repo corresponding to the image version / date that you're aiming to reproduce:
 
 ```bash
 git clone https://gitlab.archlinux.org/archlinux/archlinux-docker.git
 cd archlinux-docker
+git checkout --detach "$(git rev-list -1 --before="$(echo "${BUILD_VERSION}" | cut -c1-4,5-6,7-8 --output-delimiter=/) 09:00:00 UTC" master)"
 ```
 
 Note that all the following instructions assume that you are at the root of the
